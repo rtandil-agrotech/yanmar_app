@@ -89,11 +89,7 @@ class _AssemblyPageState extends State<AssemblyPage> {
         body: Column(
           children: [
             Expanded(
-              child: InteractiveViewer(
-                constrained: false,
-                scaleEnabled: false,
-                child: AssemblyTable(),
-              ),
+              child: AssemblyTable(),
             ),
             const Flexible(
               child: SummaryBottom(),
@@ -125,9 +121,11 @@ class _AssemblyPageState extends State<AssemblyPage> {
     }
 
     // List of plan produksi not counted for in actuals
-    for (var detail in list.last.details) {
-      for (int i = 0; i < (detail.qty - detail.actuals.length); i++) {
-        widgets.add(detail);
+    if (list.isNotEmpty) {
+      for (var detail in list.last.details) {
+        for (int i = 0; i < (detail.qty - detail.actuals.length); i++) {
+          widgets.add(detail);
+        }
       }
     }
 
@@ -159,9 +157,11 @@ class _AssemblyPageState extends State<AssemblyPage> {
     }
 
     // List of plan produksi not counted for in actuals
-    for (var detail in list.last.details) {
-      for (int i = 0; i < (detail.qty - detail.actuals.length); i++) {
-        widgets.add(detail);
+    if (list.isNotEmpty) {
+      for (var detail in list.last.details) {
+        for (int i = 0; i < (detail.qty - detail.actuals.length); i++) {
+          widgets.add(detail);
+        }
       }
     }
 
@@ -273,9 +273,11 @@ class SummaryBottom extends StatelessWidget {
     }
 
     // List of plan produksi not counted for in actuals
-    for (var detail in list.last.details) {
-      for (int i = 0; i < (detail.qty - detail.actuals.length); i++) {
-        widgets.add(detail);
+    if (list.isNotEmpty) {
+      for (var detail in list.last.details) {
+        for (int i = 0; i < (detail.qty - detail.actuals.length); i++) {
+          widgets.add(detail);
+        }
       }
     }
 
@@ -305,42 +307,66 @@ class AssemblyTable extends StatelessWidget {
             return const Center(child: CircularProgressIndicator());
           } else if (state is PlanProduksiDataFetcherDone) {
             final int maxQtyInDetails = findMaxQtyInDetails(state.result);
-
-            return DataTable(
-              columnSpacing: 10,
-              dataTextStyle: tableStyle,
-              border: TableBorder.all(color: Colors.white),
-              columns: [
-                const DataColumn(label: Text('Time')),
-                const DataColumn(label: Text('Plan')),
-                const DataColumn(label: Text('Qty')),
-                ...List.generate(maxQtyInDetails, (index) => DataColumn(label: Flexible(child: Center(child: Text((index + 1).toString()))))),
-                const DataColumn(label: Text('Total')),
-                const DataColumn(label: Text('Actual')),
-                const DataColumn(label: Text('Ratio')),
-              ],
-              rows: state.result
-                  .map((e) => DataRow(
-                        cells: [
-                          DataCell(Text('${formatter.format(e.startTime.toLocal())} - ${formatter.format(e.endTime.toLocal())}')),
-                          DataCell(
-                            Column(mainAxisSize: MainAxisSize.min, children: e.details.map((e) => Text(e.type.typeName)).toList()),
-                          ),
-                          DataCell(Column(
-                            mainAxisSize: MainAxisSize.min,
-                            children: e.details.map((e) => Text(e.qty.toString())).toList(),
-                          )),
-                          // Generate table data cells
-                          ...generateTableDataRow(maxLength: maxQtyInDetails, list: state.result, startTime: e.startTime, endTime: e.endTime)
-                              .map((e) => DataCell(e))
-                              .toList(),
-                          DataCell(Text('${calculateEstimatedDuration(e.details)} min')),
-                          DataCell(generateActualsCell(list: state.result, startTime: e.startTime, endTime: e.endTime)),
-                          DataCell(generateRatioCell(list: state.result, startTime: e.startTime, endTime: e.endTime)),
-                        ],
-                      ))
-                  .toList(),
-            );
+            if (state.result.isEmpty) {
+              return const Center(
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Padding(
+                      padding: EdgeInsets.only(right: 10.0),
+                      child: Icon(Icons.warning_amber),
+                    ),
+                    Text(
+                      'No data',
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            } else {
+              return InteractiveViewer(
+                constrained: false,
+                scaleEnabled: false,
+                child: DataTable(
+                  columnSpacing: 10,
+                  dataTextStyle: tableStyle,
+                  border: TableBorder.all(color: Colors.white),
+                  columns: [
+                    const DataColumn(label: Text('Time')),
+                    const DataColumn(label: Text('Plan')),
+                    const DataColumn(label: Text('Qty')),
+                    ...List.generate(maxQtyInDetails, (index) => DataColumn(label: Flexible(child: Center(child: Text((index + 1).toString()))))),
+                    const DataColumn(label: Text('Total')),
+                    const DataColumn(label: Text('Actual')),
+                    const DataColumn(label: Text('Ratio')),
+                  ],
+                  rows: state.result
+                      .map((e) => DataRow(
+                            cells: [
+                              DataCell(Text('${formatter.format(e.startTime.toLocal())} - ${formatter.format(e.endTime.toLocal())}')),
+                              DataCell(
+                                Column(mainAxisSize: MainAxisSize.min, children: e.details.map((e) => Text(e.type.typeName)).toList()),
+                              ),
+                              DataCell(Column(
+                                mainAxisSize: MainAxisSize.min,
+                                children: e.details.map((e) => Text(e.qty.toString())).toList(),
+                              )),
+                              // Generate table data cells
+                              ...generateTableDataRow(maxLength: maxQtyInDetails, list: state.result, startTime: e.startTime, endTime: e.endTime)
+                                  .map((e) => DataCell(e))
+                                  .toList(),
+                              DataCell(Text('${calculateEstimatedDuration(e.details)} min')),
+                              DataCell(generateActualsCell(list: state.result, startTime: e.startTime, endTime: e.endTime)),
+                              DataCell(generateRatioCell(list: state.result, startTime: e.startTime, endTime: e.endTime)),
+                            ],
+                          ))
+                      .toList(),
+                ),
+              );
+            }
           } else if (state is PlanProduksiDataFetcherError) {
             return Center(
               child: Text('Failed to fetch data. ${state.message}'),

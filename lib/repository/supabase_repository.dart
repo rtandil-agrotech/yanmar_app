@@ -6,11 +6,16 @@ class SupabaseRepository {
 
   final SupabaseClient _client;
 
-  Future<List<PlanProduksiModel>> getPlanProduksi() async {
+  Future<List<PlanProduksiModel>> getPlanProduksi({
+    required DateTime startTime,
+    required DateTime endTime,
+  }) async {
     final result = await _client
         .from('production_plan_header')
         .select(
             'id, start_time, end_time, users(id, username, user_roles(id, role_name)), production_plan_detail(id, master_production_type_header(id, type_name, estimated_production_duration) ,production_qty, order, production_actual(id, recorded_time))')
+        .gte('start_time', startTime.toUtc().toIso8601String())
+        .lte('end_time', endTime.toUtc().toIso8601String())
         .order('order', ascending: true, referencedTable: 'production_plan_detail');
 
     final List<PlanProduksiModel> planProduksiModel = result.map((e) => PlanProduksiModel.fromSupabase(e)).toList();
