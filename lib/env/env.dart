@@ -2,14 +2,10 @@ import 'package:envied/envied.dart';
 
 part 'env.g.dart';
 
-@Envied(path: '.env', obfuscate: true)
+@Envied(path: '.env')
 abstract class Env {
-  @EnviedField(varName: 'DB_HOST')
-  static String dbHost = _Env.dbHost;
-  @EnviedField(varName: 'DB_USER')
-  static String dbUser = _Env.dbUser;
-  @EnviedField(varName: 'DB_PASSWORD')
-  static String dbPassword = _Env.dbPassword;
-  @EnviedField(varName: 'DB_NAME')
-  static String dbName = _Env.dbName;
+  @EnviedField(varName: 'SUPABASE_HOST')
+  static String supabaseHost = _Env.supabaseHost;
+  @EnviedField(varName: 'ANON_KEY')
+  static String anonKey = _Env.anonKey;
 }
