@@ -29,6 +29,12 @@ class _AssemblyPageState extends State<AssemblyPage> {
   }
 
   @override
+  void dispose() {
+    _bloc.close();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return BlocProvider(
       create: (context) => _bloc,

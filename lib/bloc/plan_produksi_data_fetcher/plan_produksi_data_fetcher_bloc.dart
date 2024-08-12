@@ -23,8 +23,12 @@ class PlanProduksiDataFetcherBloc extends Bloc<PlanProduksiDataFetcherEvent, Pla
 
     on<FetchPlanProduksiData>((event, emit) async {
       emit(PlanProduksiDataFetcherLoading());
-      final result = await _repo.getPlanProduksi(startTime: startOfDay, endTime: endOfDay);
-      emit(PlanProduksiDataFetcherDone(result: result));
+      try {
+        final result = await _repo.getPlanProduksi(startTime: startOfDay, endTime: endOfDay);
+        emit(PlanProduksiDataFetcherDone(result: result));
+      } catch (e) {
+        emit(PlanProduksiDataFetcherError(message: e.toString()));
+      }
     });
   }
 
