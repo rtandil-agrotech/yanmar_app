@@ -24,7 +24,7 @@ class _AssemblyPageState extends State<AssemblyPage> {
 
   @override
   void initState() {
-    _bloc.add(FetchPlanProduksiData());
+    _bloc.add(const FetchPlanProduksiData());
     super.initState();
   }
 

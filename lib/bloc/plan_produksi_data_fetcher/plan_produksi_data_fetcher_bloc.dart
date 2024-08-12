@@ -19,7 +19,7 @@ class PlanProduksiDataFetcherBloc extends Bloc<PlanProduksiDataFetcherEvent, Pla
     final DateTime endOfDay = DateTime(now.year, now.month, now.day, 23, 59, 59, 999);
 
     subs = _repo.subscribeToProductionActualChanges((payload) {
-      add(FetchPlanProduksiData());
+      add(const FetchPlanProduksiData());
     });
 
     on<FetchPlanProduksiData>((event, emit) async {
