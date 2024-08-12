@@ -1,4 +1,4 @@
-FROM ghcr.io/cirruslabs/flutter:3.24.0-0.2.pre
+FROM ghcr.io/cirruslabs/flutter:3.24.0-0.2.pre as build-env
 
 RUN flutter doctor -v
 
