@@ -8,8 +8,16 @@ class DeliveryPlanModel extends Equatable {
   final DateTime endTime;
   final List<DeliveryPlanDetailModel> details;
   final List<ItemRequestsModel> itemRequests;
+  final List<bool> isHelpPressed;
 
-  const DeliveryPlanModel({required this.id, required this.startTime, required this.endTime, required this.details, required this.itemRequests});
+  const DeliveryPlanModel({
+    required this.id,
+    required this.startTime,
+    required this.endTime,
+    required this.details,
+    required this.itemRequests,
+    required this.isHelpPressed,
+  });
 
   factory DeliveryPlanModel.fromSupabase(Map<String, dynamic> map) {
     return DeliveryPlanModel(
@@ -18,6 +26,7 @@ class DeliveryPlanModel extends Equatable {
       endTime: DateTime.parse(map['end_time']),
       details: (map['production_plan_detail'] as List<dynamic>?)?.map((e) => DeliveryPlanDetailModel.fromSupabase(e)).toList() ?? [],
       itemRequests: (map['item_requests'] as List<dynamic>?)?.map((e) => ItemRequestsModel.fromSupabase(e)).toList() ?? [],
+      isHelpPressed: (map['checklist_header'] as List<dynamic>?)?.map((e) => e['is_help_pressed'] as bool).toList() ?? [],
     );
   }
 

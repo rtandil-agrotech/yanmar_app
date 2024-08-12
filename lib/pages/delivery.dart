@@ -324,7 +324,7 @@ class DeliveryTable extends StatelessWidget {
           if (duration < fulfilmentTime) {
             return Colors.green;
           } else if (duration > fulfilmentTime) {
-            if (itemRequestData.isHelpPressed) {
+            if (data.isHelpPressed.contains(true)) {
               return Colors.red;
             } else {
               return Colors.amber;

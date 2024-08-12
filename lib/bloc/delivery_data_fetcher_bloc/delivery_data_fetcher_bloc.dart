@@ -18,9 +18,11 @@ class DeliveryDataFetcherBloc extends Bloc<DeliveryDataFetcherEvent, DeliveryDat
     // End of the day
     final DateTime endOfDay = DateTime(now.year, now.month, now.day, 23, 59, 59, 999);
 
-    subs = _repo.subscribeToItemRequestChanges((payload) {
+    subs1 = _repo.subscribeToItemRequestChanges((payload) {
       add(FetchDeliveryData());
     });
+
+    subs2 = _repo.subscribeToChecklistChanges(((p0) => add(FetchDeliveryData())));
 
     on<FetchDeliveryData>((event, emit) async {
       emit(DeliveryDataFetcherLoading());
@@ -34,11 +36,13 @@ class DeliveryDataFetcherBloc extends Bloc<DeliveryDataFetcherEvent, DeliveryDat
   }
 
   final _repo = locator.get<SupabaseRepository>();
-  late final RealtimeChannel subs;
+  late final RealtimeChannel subs1;
+  late final RealtimeChannel subs2;
 
   @override
   Future<void> close() {
-    _repo.unsubscribe(subs);
+    _repo.unsubscribe(subs1);
+    _repo.unsubscribe(subs2);
     return super.close();
   }
 }
