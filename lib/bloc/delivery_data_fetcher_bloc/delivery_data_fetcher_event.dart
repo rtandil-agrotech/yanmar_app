@@ -7,4 +7,4 @@ sealed class DeliveryDataFetcherEvent extends Equatable {
   List<Object> get props => [];
 }
 
-class FetchDeliveryData extends DeliveryDataFetcherEvent {}
+final class FetchDeliveryData extends DeliveryDataFetcherEvent {}
