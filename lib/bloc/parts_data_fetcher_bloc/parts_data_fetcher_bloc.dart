@@ -12,7 +12,7 @@ class PartsDataFetcherBloc extends Bloc<PartsDataFetcherEvent, PartsDataFetcherS
     on<FetchPartsData>((event, emit) async {
       emit(PartsDataFetcherLoading());
       try {
-        final result = await _repo.getPartListForOpAssembly(opAssemblyId: event.opAssemblyId, currentTime: DateTime.parse('2024-08-11 08:35'));
+        final result = await _repo.getPartListForOpAssembly(opAssemblyId: event.opAssemblyId, currentTime: DateTime.now());
         emit(PartsDataFetcherDone(result));
       } catch (e) {
         emit(PartsDataFetcherFailed(e.toString()));
