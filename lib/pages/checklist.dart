@@ -214,6 +214,16 @@ class PartsPage extends StatelessWidget {
               padding: const EdgeInsets.only(left: 20.0, right: 20.0),
               child: Column(
                 children: [
+                  StreamBuilder(
+                    stream: Stream.periodic(const Duration(seconds: 1)),
+                    builder: ((context, snapshot) => Align(
+                          alignment: Alignment.centerRight,
+                          child: Text(
+                            'TIME REMAINING: ${_printDuration(state.data!.startTime.add(const Duration(minutes: 60)).difference(DateTime.now()))}',
+                            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 20, color: Colors.amber),
+                          ),
+                        )),
+                  ),
                   Padding(
                     padding: const EdgeInsets.only(top: 10.0, bottom: 5.0),
                     child: Text(
@@ -313,6 +323,14 @@ class PartsPage extends StatelessWidget {
         return Container();
       },
     );
+  }
+
+  String _printDuration(Duration duration) {
+    String negativeSign = duration.isNegative ? '-' : '';
+    String twoDigits(int n) => n.toString().padLeft(2, "0");
+    String twoDigitMinutes = twoDigits(duration.inMinutes.remainder(60).abs());
+    String twoDigitSeconds = twoDigits(duration.inSeconds.remainder(60).abs());
+    return "$negativeSign${twoDigits(duration.inHours)}:$twoDigitMinutes:$twoDigitSeconds";
   }
 }
 
