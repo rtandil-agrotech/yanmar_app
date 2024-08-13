@@ -75,6 +75,7 @@ class _ChecklistPageState extends State<ChecklistPage> {
           listener: (context, state) {
             if (state is RackDataFetcherDone) {
               List<OpAssemblyModel> opAssembly = state.data.map((e) => e.opAssemblyModel).expand((element) => element).toList();
+              print(opAssembly);
               _partsBloc.add(FetchPartsData(opAssemblyId: opAssembly[_currentIndex].id));
             }
           },
@@ -161,7 +162,7 @@ class _ChecklistPageState extends State<ChecklistPage> {
     }
 
     List<OpAssemblyModel> opAssembly = data.map((e) => e.opAssemblyModel).expand((element) => element).toList();
-    _partsBloc.add(FetchPartsData(opAssemblyId: opAssembly[_currentIndex].id));
+    _partsBloc.add(FetchPartsData(opAssemblyId: opAssembly[currentPageIndex].id));
 
     setState(() {
       _currentIndex = currentPageIndex;
@@ -279,7 +280,16 @@ class PartsPage extends StatelessWidget {
                                   ),
                                   Flexible(
                                     child: Text(
-                                      state.data!.details.expand((element) => element.masterProductionType.details).toList()[index].qty.toString(),
+                                      () {
+                                        final partId =
+                                            state.data!.details.expand((element) => element.masterProductionType.details).toList()[index].id;
+                                        final partQty =
+                                            state.data!.details.expand((element) => element.masterProductionType.details).toList()[index].qty;
+                                        final prodQty = state.data!.details
+                                            .firstWhere((element) => element.masterProductionType.details.map((e) => e.id).contains(partId))
+                                            .productionQty;
+                                        return '${partQty * prodQty}';
+                                      }(),
                                       softWrap: true,
                                     ),
                                   ),
