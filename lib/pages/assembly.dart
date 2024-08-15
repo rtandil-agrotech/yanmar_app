@@ -40,7 +40,11 @@ class _AssemblyPageState extends State<AssemblyPage> {
       create: (context) => _bloc,
       child: Scaffold(
         appBar: AppBar(
-          leading: Center(child: Text(DateFormat('EEEE, d MMMM yyyy').format(DateTime.now()))),
+          leading: Center(
+              child: Text(
+            DateFormat('EEEE, d MMMM yyyy').format(DateTime.now()),
+            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.amber),
+          )),
           leadingWidth: 200,
           title: const Text('ASSEMBLY BOARD'),
           centerTitle: true,
@@ -84,7 +88,10 @@ class _AssemblyPageState extends State<AssemblyPage> {
                     stream: Stream.periodic(const Duration(seconds: 1)),
                     builder: ((context, snapshot) => Align(
                           alignment: Alignment.center,
-                          child: Text(DateFormat('HH:mm:ss').format(DateTime.now())),
+                          child: Text(
+                            DateFormat('HH:mm:ss').format(DateTime.now()),
+                            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.amber),
+                          ),
                         )),
                   ),
                 ],

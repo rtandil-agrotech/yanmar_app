@@ -134,11 +134,7 @@ class _DeliveryPageState extends State<DeliveryPage> {
                   ),
                 );
               } else {
-                return InteractiveViewer(
-                  constrained: false,
-                  scaleEnabled: false,
-                  child: DeliveryTable(data: state.result),
-                );
+                return Center(child: DeliveryTable(data: state.result));
               }
             } else if (state is DeliveryDataFetcherFailed) {
               return Center(
@@ -170,6 +166,7 @@ class DeliveryTable extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         SizedBox(
