@@ -2,11 +2,9 @@ import 'dart:math';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:get_it/get_it.dart';
 import 'package:yanmar_app/bloc/plan_produksi_data_fetcher/plan_produksi_data_fetcher_bloc.dart';
 import 'package:intl/intl.dart';
 import 'package:yanmar_app/models/plan_produksi_model.dart';
-import 'package:yanmar_app/models/production_actual_model.dart';
 import 'package:yanmar_app/models/production_type_model.dart';
 
 const TextStyle tableStyle = TextStyle(fontSize: 11, color: Colors.white, overflow: TextOverflow.ellipsis);
@@ -94,13 +92,14 @@ class _AssemblyPageState extends State<AssemblyPage> {
             )
           ],
         ),
-        body: Column(
+        body: const Column(
           children: [
-            Expanded(
-              child: Center(child: AssemblyTable()),
-            ),
-            const Spacer(),
-            Flexible(child: Container(color: Colors.amber, child: const SummaryBottom())),
+            Center(child: AssemblyTable()),
+            Flexible(
+                child: Padding(
+              padding: EdgeInsets.only(top: 10.0),
+              child: SummaryBottom(),
+            )),
           ],
         ),
       ),
@@ -111,72 +110,128 @@ class _AssemblyPageState extends State<AssemblyPage> {
     required int maxLength,
     required List<PlanProduksiModel> list,
   }) {
-    List<PlanProduksiDetailModel> widgets = [];
-    List<String> lateType = [];
+    int generatedCell = 0;
 
-    // Find actuals in time range of last row
+    List<PlanProduksiDetailModel> late = [];
+
     for (var rows in list) {
-      for (var details in rows.details) {
-        for (var actuals in details.actuals) {
-          if (actuals.recordedTime.isAfter(list.last.startTime) && actuals.recordedTime.isBefore(list.last.endTime) ||
-              actuals.recordedTime.isAtSameMomentAs(list.last.startTime) ||
-              actuals.recordedTime.isAtSameMomentAs(list.last.endTime)) {
-            widgets.add(details);
+      int countActualsInRow = 0;
+
+      final DateTime startTime = rows.startTime;
+      final DateTime endTime = rows.endTime;
+
+      // Generate actuals boxes in row
+      // -> Actuals from this row in time range
+      // -> Actuals from another row but in this time range
+      for (var row in list) {
+        for (var detail in row.details) {
+          for (var actuals in detail.actuals) {
+            if (actuals.recordedTime.isAfter(startTime) && actuals.recordedTime.isBefore(endTime) ||
+                actuals.recordedTime.isAtSameMomentAs(startTime) ||
+                actuals.recordedTime.isAtSameMomentAs(endTime)) {
+              generatedCell++;
+              countActualsInRow++;
+            }
+          }
+        }
+      }
+
+      if (!list
+          .firstWhere((e) => e.startTime.isAtSameMomentAs(startTime))
+          .details
+          .expand((f) => f.actuals)
+          .any((g) => g.recordedTime.isAfter(endTime))) {
+        final int maxQtyInRow = list.firstWhere((e) => e.startTime.isAtSameMomentAs(startTime)).details.fold(0, (total, f) => total + f.qty);
+        int accumulatedQty = 0;
+        int planGenerated = 0;
+
+        for (var row in list) {
+          for (var detail in row.details) {
+            accumulatedQty += detail.qty;
+
+            if (accumulatedQty > generatedCell) {
+              // Generate Plan based on qty of current detail
+              for (int i = generatedCell; i < accumulatedQty; i++) {
+                planGenerated++;
+
+                generatedCell++;
+
+                if (countActualsInRow + planGenerated == maxQtyInRow) {
+                  late.add(detail);
+                }
+              }
+            }
           }
         }
       }
     }
 
-    // List of plan produksi not counted for in actuals
-    if (list.isNotEmpty) {
-      for (var detail in list.last.details) {
-        for (int i = 0; i < (detail.qty - detail.actuals.length); i++) {
-          widgets.add(detail);
-        }
-      }
-    }
-
-    if (widgets.length > maxLength) {
-      lateType = widgets.map((e) => e.type.typeName).toList().sublist(maxLength, widgets.length);
-    }
-
-    return lateType.length;
+    return late.isNotEmpty ? late.length : 0;
   }
 
   Duration calculateLateTime({
     required int maxLength,
     required List<PlanProduksiModel> list,
   }) {
-    List<PlanProduksiDetailModel> widgets = [];
-    List<Duration> lateType = [];
+    int generatedCell = 0;
 
-    // Find actuals in time range of last row
+    List<PlanProduksiDetailModel> late = [];
+
     for (var rows in list) {
-      for (var details in rows.details) {
-        for (var actuals in details.actuals) {
-          if (actuals.recordedTime.isAfter(list.last.startTime) && actuals.recordedTime.isBefore(list.last.endTime) ||
-              actuals.recordedTime.isAtSameMomentAs(list.last.startTime) ||
-              actuals.recordedTime.isAtSameMomentAs(list.last.endTime)) {
-            widgets.add(details);
+      int countActualsInRow = 0;
+
+      final DateTime startTime = rows.startTime;
+      final DateTime endTime = rows.endTime;
+
+      // Generate actuals boxes in row
+      // -> Actuals from this row in time range
+      // -> Actuals from another row but in this time range
+      for (var row in list) {
+        for (var detail in row.details) {
+          for (var actuals in detail.actuals) {
+            if (actuals.recordedTime.isAfter(startTime) && actuals.recordedTime.isBefore(endTime) ||
+                actuals.recordedTime.isAtSameMomentAs(startTime) ||
+                actuals.recordedTime.isAtSameMomentAs(endTime)) {
+              generatedCell++;
+              countActualsInRow++;
+            }
+          }
+        }
+      }
+
+      if (!list
+          .firstWhere((e) => e.startTime.isAtSameMomentAs(startTime))
+          .details
+          .expand((f) => f.actuals)
+          .any((g) => g.recordedTime.isAfter(endTime))) {
+        final int maxQtyInRow = list.firstWhere((e) => e.startTime.isAtSameMomentAs(startTime)).details.fold(0, (total, f) => total + f.qty);
+        int accumulatedQty = 0;
+        int planGenerated = 0;
+
+        for (var row in list) {
+          for (var detail in row.details) {
+            accumulatedQty += detail.qty;
+
+            if (accumulatedQty > generatedCell) {
+              // Generate Plan based on qty of current detail
+              for (int i = generatedCell; i < accumulatedQty; i++) {
+                planGenerated++;
+
+                generatedCell++;
+
+                if (countActualsInRow + planGenerated == maxQtyInRow) {
+                  late.add(detail);
+                }
+              }
+            }
           }
         }
       }
     }
 
-    // List of plan produksi not counted for in actuals
-    if (list.isNotEmpty) {
-      for (var detail in list.last.details) {
-        for (int i = 0; i < (detail.qty - detail.actuals.length); i++) {
-          widgets.add(detail);
-        }
-      }
-    }
-
-    if (widgets.length > maxLength) {
-      lateType = widgets.map((e) => e.type.estimatedProductionTime).toList().sublist(maxLength, widgets.length);
-    }
-
-    return Duration(seconds: lateType.fold(0, (total, element) => total + element.inSeconds));
+    return late.isNotEmpty
+        ? Duration(seconds: late.fold(0, (total, e) => total + e.type.estimatedProductionTime.inSeconds))
+        : const Duration(seconds: 0);
   }
 }
 
@@ -263,45 +318,70 @@ class SummaryBottom extends StatelessWidget {
     required int maxLength,
     required List<PlanProduksiModel> list,
   }) {
-    List<PlanProduksiDetailModel> widgets = [];
-    List<String> lateType = [];
+    int generatedCell = 0;
 
-    // Find actuals in time range of last row
+    List<PlanProduksiDetailModel> late = [];
+
     for (var rows in list) {
-      for (var details in rows.details) {
-        for (var actuals in details.actuals) {
-          if (actuals.recordedTime.isAfter(list.last.startTime) && actuals.recordedTime.isBefore(list.last.endTime) ||
-              actuals.recordedTime.isAtSameMomentAs(list.last.startTime) ||
-              actuals.recordedTime.isAtSameMomentAs(list.last.endTime)) {
-            widgets.add(details);
+      int countActualsInRow = 0;
+
+      final DateTime startTime = rows.startTime;
+      final DateTime endTime = rows.endTime;
+
+      // Generate actuals boxes in row
+      // -> Actuals from this row in time range
+      // -> Actuals from another row but in this time range
+      for (var row in list) {
+        for (var detail in row.details) {
+          for (var actuals in detail.actuals) {
+            if (actuals.recordedTime.isAfter(startTime) && actuals.recordedTime.isBefore(endTime) ||
+                actuals.recordedTime.isAtSameMomentAs(startTime) ||
+                actuals.recordedTime.isAtSameMomentAs(endTime)) {
+              generatedCell++;
+              countActualsInRow++;
+            }
+          }
+        }
+      }
+
+      if (!list
+          .firstWhere((e) => e.startTime.isAtSameMomentAs(startTime))
+          .details
+          .expand((f) => f.actuals)
+          .any((g) => g.recordedTime.isAfter(endTime))) {
+        final int maxQtyInRow = list.firstWhere((e) => e.startTime.isAtSameMomentAs(startTime)).details.fold(0, (total, f) => total + f.qty);
+        int accumulatedQty = 0;
+        int planGenerated = 0;
+
+        for (var row in list) {
+          for (var detail in row.details) {
+            accumulatedQty += detail.qty;
+
+            if (accumulatedQty > generatedCell) {
+              // Generate Plan based on qty of current detail
+              for (int i = generatedCell; i < accumulatedQty; i++) {
+                planGenerated++;
+
+                generatedCell++;
+
+                if (countActualsInRow + planGenerated == maxQtyInRow) {
+                  late.add(detail);
+                }
+              }
+            }
           }
         }
       }
     }
 
-    // List of plan produksi not counted for in actuals
-    if (list.isNotEmpty) {
-      for (var detail in list.last.details) {
-        for (int i = 0; i < (detail.qty - detail.actuals.length); i++) {
-          widgets.add(detail);
-        }
-      }
-    }
-
-    if (widgets.length > maxLength) {
-      lateType = widgets.map((e) => e.type.typeName).toList().sublist(maxLength, widgets.length);
-    }
-
-    return lateType.isNotEmpty ? lateType.join(' | ') : '';
+    return late.isNotEmpty ? late.map((e) => e.type.typeName).join(' | ') : '';
   }
 }
 
 class AssemblyTable extends StatelessWidget {
-  AssemblyTable({
+  const AssemblyTable({
     super.key,
   });
-
-  final DateFormat formatter = DateFormat('HH:mm');
 
   @override
   Widget build(BuildContext context) {
@@ -346,24 +426,7 @@ class AssemblyTable extends StatelessWidget {
                   const DataColumn(label: Text('Actual')),
                   const DataColumn(label: Text('Ratio')),
                 ],
-                rows: state.result
-                    .map((e) => DataRow(
-                          cells: [
-                            DataCell(Text('${formatter.format(e.startTime.toLocal())} - ${formatter.format(e.endTime.toLocal())}')),
-                            DataCell(
-                              Column(mainAxisSize: MainAxisSize.min, children: e.details.map((e) => Text(e.type.typeName)).toList()),
-                            ),
-                            DataCell(Column(
-                              mainAxisSize: MainAxisSize.min,
-                              children: e.details.map((e) => Text(e.qty.toString())).toList(),
-                            )),
-                            // Generate table data cells
-                            ...generateTableDataRow(maxLength: maxQtyInDetails, list: state.result, startTime: e.startTime, endTime: e.endTime)
-                                .map((e) => DataCell(e))
-                                .toList(),
-                          ],
-                        ))
-                    .toList(),
+                rows: generateTable(list: state.result, maxLength: maxQtyInDetails),
               );
             }
           } else if (state is PlanProduksiDataFetcherError) {
@@ -428,196 +491,152 @@ int findMaxQtyInDetails(List<PlanProduksiModel> list) {
   return maxQty;
 }
 
-List<Widget> generateTableDataRow(
-    {required int maxLength, required List<PlanProduksiModel> list, required DateTime startTime, required DateTime endTime}) {
-  final List<Widget> widgets = [];
+List<DataRow> generateTable({required List<PlanProduksiModel> list, required int maxLength}) {
+  final DateFormat formatter = DateFormat('HH:mm');
 
-  final List<PlanProduksiDetailModel> movedFromBeforeRow = [];
-  final List<PlanProduksiDetailModel> movedToAfterRow = [];
+  final List<DataRow> listDataRow = [];
 
-  // Record unique types of actual record in current time range
-  final Set<ProductionTypeModel> uniqueActualTypesInRow = {};
+  // Keeps track of how many cells have been generated
+  // Added based on how many actuals and plans are generated in a row
+  int generatedCell = 0;
 
-  // Generate actuals boxes in row
-  // -> Actuals from this row in time range
-  // -> Actuals from another row but in this time range
   for (var row in list) {
-    for (var detail in row.details) {
-      for (var actuals in detail.actuals) {
-        if (actuals.recordedTime.isAfter(startTime) && actuals.recordedTime.isBefore(endTime) ||
-            actuals.recordedTime.isAtSameMomentAs(startTime) ||
-            actuals.recordedTime.isAtSameMomentAs(endTime)) {
-          widgets.add(Container(
-            constraints: const BoxConstraints.expand(),
-            color: Colors.green,
-            child: Center(child: Text(detail.type.typeName, style: tableStyle)),
-          ));
+    final DateTime startTime = row.startTime;
+    final DateTime endTime = row.endTime;
+    // Keeps track of unique types in a row
+    final Set<ProductionTypeModel> uniqueActualTypesInRow = {};
 
-          uniqueActualTypesInRow.add(detail.type);
+    // Time
+    final DataCell timeCell = DataCell(Text('${formatter.format(startTime.toLocal())} - ${formatter.format(endTime.toLocal())}'));
+    // Plan
+    final DataCell planCell = DataCell(Column(mainAxisSize: MainAxisSize.min, children: row.details.map((e) => Text(e.type.typeName)).toList()));
+    // Qty
+    final DataCell qtyCell = DataCell(Column(mainAxisSize: MainAxisSize.min, children: row.details.map((e) => Text(e.qty.toString())).toList()));
+
+    final List<Widget> widgets = [];
+
+    int countActualsInRow = 0;
+
+    // Generate actuals boxes in row
+    // -> Actuals from this row in time range
+    // -> Actuals from another row but in this time range
+    for (var row in list) {
+      for (var detail in row.details) {
+        for (var actuals in detail.actuals) {
+          if (actuals.recordedTime.isAfter(startTime) && actuals.recordedTime.isBefore(endTime) ||
+              actuals.recordedTime.isAtSameMomentAs(startTime) ||
+              actuals.recordedTime.isAtSameMomentAs(endTime)) {
+            widgets.add(Container(
+              constraints: const BoxConstraints.expand(),
+              color: Colors.green,
+              child: Center(child: Text(detail.type.typeName, style: tableStyle)),
+            ));
+
+            generatedCell++;
+            countActualsInRow++;
+
+            uniqueActualTypesInRow.add(detail.type);
+          }
         }
       }
     }
-  }
 
-  final PlanProduksiModel currentRowPlan = list.firstWhere((e) => e.startTime == startTime);
-
-  for (var row in list) {
-    for (var detail in row.details) {
-      for (var actuals in detail.actuals) {
-        if (actuals.recordedTime.isAfter(row.endTime) &&
-            (actuals.recordedTime.isBefore(startTime) || actuals.recordedTime.isAfter(startTime) && actuals.recordedTime.isBefore(endTime))) {
-          // if actual is after plan time (move to next row) and before current start time or in current row
-          movedFromBeforeRow.add(detail);
-        } else if (actuals.recordedTime.isBefore(row.startTime) &&
-            (actuals.recordedTime.isBefore(startTime) || actuals.recordedTime.isAfter(startTime) && actuals.recordedTime.isBefore(endTime))) {
-          // if actual is before plan time (move to prev row) and after current end time or in current row
-          movedToAfterRow.add(detail);
-        }
-      }
-    }
-  }
-
-  final int movedDiff = movedFromBeforeRow.length - movedToAfterRow.length;
-
-  print('moved diff: $movedDiff');
-
-  // Generate plan moved from prev row
-  if (movedDiff > 0) {
-    int loopCount = 0;
-
-    // Get details for plans before current row
-    final List<PlanProduksiDetailModel> detailsBeforeRow =
-        list.where((e) => e.startTime.isBefore(currentRowPlan.startTime)).expand((f) => f.details).toList();
-
-    // Print type sequentially from row n-1 to row 0 according to qty of the detail in each row.
-    // Only break loop when loop count is equal to movedDiff
-    outerloop:
-    for (int j = detailsBeforeRow.length - 1; j >= 0; j--) {
-      // If prev row's actual is already achieved, no need to move planned to next row
-      if (detailsBeforeRow[j].qty == detailsBeforeRow[j].actuals.length) break;
-
-      for (int i = 0; i < detailsBeforeRow[j].qty; i++) {
-        widgets.add(
-          Text(detailsBeforeRow[j].type.typeName, style: tableStyle),
-        );
-
-        loopCount += 1;
-
-        if (loopCount == movedDiff.abs()) break outerloop;
-      }
-    }
-  }
-
-  // Generate planned for current row
-  // -> Planned for this row in this time range - ACtuals in this row in this time range already generated
-  for (var detail in currentRowPlan.details) {
-    final List actualsForDetail = list.expand((f) => f.details).where((g) => g.id == detail.id).expand((h) => h.actuals).toList();
-    for (int i = 0; i < (detail.qty - actualsForDetail.length); i++) {
-      widgets.add(
-        Text(detail.type.typeName, style: tableStyle),
-      );
-    }
-  }
-
-  // TODO: fix this
-  // Generate planned for next row
-  if (movedDiff < 0) {
-    int loopCount = 0;
-
-    final List<PlanProduksiDetailModel> detailsAfterRow =
-        list.where((e) => e.startTime.isAfter(currentRowPlan.endTime)).expand((f) => f.details).toList();
-
-    // If no next plan, no need to loop
-    if (detailsAfterRow.isNotEmpty) {
-      // Print type sequentially from row 0 to row n+1 according to qty of detail in each row
-      // Only break loop when loop count is equal to movedDiff
-      print(detailsAfterRow);
+    if (!list
+        .firstWhere((e) => e.startTime.isAtSameMomentAs(startTime))
+        .details
+        .expand((f) => f.actuals)
+        .any((g) => g.recordedTime.isAfter(endTime))) {
+      final int maxQtyInRow = list.firstWhere((e) => e.startTime.isAtSameMomentAs(startTime)).details.fold(0, (total, f) => total + f.qty);
+      int accumulatedQty = 0;
+      int planGenerated = 0;
 
       outerloop:
-      for (int i = 0; i < detailsAfterRow.length - 1; i++) {
-        for (int j = 0; j < detailsAfterRow[i].qty; i++) {
-          widgets.add(
-            Text(detailsAfterRow[i].type.typeName, style: tableStyle),
-          );
+      for (var row in list) {
+        for (var detail in row.details) {
+          accumulatedQty += detail.qty;
 
-          print('j: $j, i: $i');
+          if (accumulatedQty > generatedCell) {
+            // Generate Plan based on qty of current detail
+            for (int i = generatedCell; i < accumulatedQty; i++) {
+              widgets.add(
+                Text(detail.type.typeName, style: tableStyle),
+              );
+              planGenerated++;
 
-          loopCount += 1;
+              generatedCell++;
 
-          if (loopCount == movedDiff.abs()) break outerloop;
+              if (countActualsInRow + planGenerated == maxQtyInRow) break outerloop;
+            }
+          }
         }
       }
     }
-  }
 
-  // TODO: check if this is true for all condition of movedDiff
-  // Remove overflow from movedDiff
-  widgets.removeRange(widgets.length - movedDiff.abs(), widgets.length);
-
-  print(widgets.length);
-
-  // Generate empty boxes to fill row
-  for (int i = widgets.length; i < maxLength; i++) {
-    widgets.add(const SizedBox());
-  }
-
-  // Prevent row overflow
-  if (widgets.length > maxLength) {
-    widgets.removeRange(maxLength, widgets.length);
-  }
-
-  /* -------------------------- TOTAL, ACTUAL & RATIO ------------------------- */
-  // Calculate estimated time
-  int estimatedTime = 0;
-
-  for (var detail in list.firstWhere((e) => e.startTime == startTime).details) {
-    estimatedTime += detail.qty * detail.type.estimatedProductionTime.inSeconds;
-  }
-
-  widgets.add(Text('${Duration(seconds: estimatedTime).inMinutes} min'));
-
-  // Count actuals based on type in current row
-  final List<Widget> actualCountWidgets = [];
-  int ratio = 0;
-
-  for (var type in uniqueActualTypesInRow) {
-    int count = list
-        .expand((e) => e.details)
-        .where((f) => f.type.id == type.id) // filter details based on type id
-        .expand((g) => g.actuals)
-        .where((h) =>
-            h.recordedTime.isAfter(startTime) && h.recordedTime.isBefore(endTime) ||
-            h.recordedTime.isAtSameMomentAs(startTime) ||
-            h.recordedTime.isAtSameMomentAs(endTime))
-        .toList()
-        .length;
-
-    if (count > 0) {
-      actualCountWidgets.add(Text(
-        '${type.typeName}: $count',
-        style: tableStyle.copyWith(color: Colors.amber),
-      ));
-
-      ratio += count;
+    // Generate Empty Boxes
+    for (int i = widgets.length; i < maxLength; i++) {
+      widgets.add(const SizedBox());
     }
+
+    /* -------------------------- TOTAL, ACTUAL & RATIO ------------------------- */
+    // Calculate estimated time
+    int estimatedTime = 0;
+
+    for (var detail in list.firstWhere((e) => e.startTime == startTime).details) {
+      estimatedTime += detail.qty * detail.type.estimatedProductionTime.inSeconds;
+    }
+
+    widgets.add(Text('${Duration(seconds: estimatedTime).inMinutes} min'));
+
+    // Count actuals based on type in current row
+    final List<Widget> actualCountWidgets = [];
+    int ratio = 0;
+
+    for (var type in uniqueActualTypesInRow) {
+      int count = list
+          .expand((e) => e.details)
+          .where((f) => f.type.id == type.id) // filter details based on type id
+          .expand((g) => g.actuals)
+          .where((h) =>
+              h.recordedTime.isAfter(startTime) && h.recordedTime.isBefore(endTime) ||
+              h.recordedTime.isAtSameMomentAs(startTime) ||
+              h.recordedTime.isAtSameMomentAs(endTime))
+          .toList()
+          .length;
+
+      if (count > 0) {
+        actualCountWidgets.add(Text(
+          '${type.typeName}: $count',
+          style: tableStyle.copyWith(color: Colors.amber),
+        ));
+
+        ratio += count;
+      }
+    }
+
+    widgets.add(Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      mainAxisSize: MainAxisSize.min,
+      children: actualCountWidgets,
+    ));
+
+    // Count Ratio
+    if (ratio > 0) {
+      widgets.add(Center(
+          child: Text(
+        '$ratio',
+        style: tableStyle,
+      )));
+    } else {
+      widgets.add(const SizedBox());
+    }
+
+    listDataRow.add(DataRow(cells: [
+      timeCell,
+      planCell,
+      qtyCell,
+      ...widgets.map((e) => DataCell(e)).toList(),
+    ]));
   }
 
-  widgets.add(Column(
-    mainAxisAlignment: MainAxisAlignment.center,
-    mainAxisSize: MainAxisSize.min,
-    children: actualCountWidgets,
-  ));
-
-  // Count Ratio
-  if (ratio > 0) {
-    widgets.add(Center(
-        child: Text(
-      '$ratio',
-      style: tableStyle,
-    )));
-  } else {
-    widgets.add(const SizedBox());
-  }
-
-  return widgets;
+  return listDataRow;
 }
