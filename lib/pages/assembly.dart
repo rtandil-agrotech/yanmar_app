@@ -111,66 +111,16 @@ class _AssemblyPageState extends State<AssemblyPage> {
             )
           ],
         ),
-        body: Column(
+        body: const Column(
           children: [
-            const Center(child: AssemblyTable()),
-            const Flexible(
+            Center(child: AssemblyTable()),
+            Flexible(
               child: Padding(
                 padding: EdgeInsets.only(top: 10.0),
                 child: SummaryBottom(),
               ),
             ),
-            Flexible(
-              flex: 5,
-              child: BlocBuilder<MonthlyPlanProduksiDataFetcherBloc, MonthlyPlanProduksiDataFetcherState>(
-                builder: (context, state) {
-                  if (state is MonthlyPlanProduksiDataFetcherDone) {
-                    return Center(
-                      child: BarChart(
-                        BarChartData(
-                          titlesData: FlTitlesData(
-                            show: true,
-                            bottomTitles: AxisTitles(
-                              sideTitles: SideTitles(
-                                showTitles: true,
-                                getTitlesWidget: (index, meta) {
-                                  return SideTitleWidget(
-                                    axisSide: meta.axisSide,
-                                    child: Text(state.result.expand((e) => e.details).map((f) => f.type).toList().elementAt(index.toInt()).typeName),
-                                  );
-                                },
-                              ),
-                            ),
-                          ),
-                          barGroups: List.generate(
-                            state.result.expand((e) => e.details).map((f) => f.type).toSet().length,
-                            (index) => BarChartGroupData(
-                              x: index,
-                              barRods: [
-                                BarChartRodData(
-                                  toY: state.result.expand((e) => e.details).elementAt(index).qty.toDouble(),
-                                  color: Colors.grey,
-                                  rodStackItems: [
-                                    BarChartRodStackItem(
-                                      0,
-                                      state.result.expand((e) => e.details).elementAt(index).actuals.length.toDouble(),
-                                      Colors.green,
-                                    ),
-                                  ],
-                                )
-                              ],
-                            ),
-                          ),
-                        ),
-                      ),
-                    );
-                  } else if (state is MonthlyPlanProduksiDataFetcherFailed) {
-                    return Center(child: Text('Failed to load graph: ${state.message}'));
-                  }
-                  return Container();
-                },
-              ),
-            )
+            Flexible(flex: 5, child: GraphWidget())
           ],
         ),
       ),
@@ -303,6 +253,64 @@ class _AssemblyPageState extends State<AssemblyPage> {
     return late.isNotEmpty
         ? Duration(seconds: late.fold(0, (total, e) => total + e.type.estimatedProductionTime!.inSeconds))
         : const Duration(seconds: 0);
+  }
+}
+
+class GraphWidget extends StatelessWidget {
+  const GraphWidget({
+    super.key,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return BlocBuilder<MonthlyPlanProduksiDataFetcherBloc, MonthlyPlanProduksiDataFetcherState>(
+      builder: (context, state) {
+        if (state is MonthlyPlanProduksiDataFetcherDone) {
+          return Center(
+            child: BarChart(
+              BarChartData(
+                titlesData: FlTitlesData(
+                  show: true,
+                  bottomTitles: AxisTitles(
+                    sideTitles: SideTitles(
+                      showTitles: true,
+                      getTitlesWidget: (index, meta) {
+                        return SideTitleWidget(
+                          axisSide: meta.axisSide,
+                          child: Text(state.result.expand((e) => e.details).map((f) => f.type).toList().elementAt(index.toInt()).typeName),
+                        );
+                      },
+                    ),
+                  ),
+                ),
+                barGroups: List.generate(
+                  state.result.expand((e) => e.details).map((f) => f.type).toSet().length,
+                  (index) => BarChartGroupData(
+                    x: index,
+                    barRods: [
+                      BarChartRodData(
+                        toY: state.result.expand((e) => e.details).elementAt(index).qty.toDouble(),
+                        color: Colors.grey,
+                        rodStackItems: [
+                          BarChartRodStackItem(
+                            0,
+                            state.result.expand((e) => e.details).elementAt(index).actuals.length.toDouble(),
+                            Colors.green,
+                          ),
+                        ],
+                      )
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          );
+        } else if (state is MonthlyPlanProduksiDataFetcherFailed) {
+          return Center(child: Text('Failed to load graph: ${state.message}'));
+        }
+        return Container();
+      },
+    );
   }
 }
 
