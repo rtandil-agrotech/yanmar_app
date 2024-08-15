@@ -60,3 +60,52 @@ class PlanProduksiDetailModel extends Equatable {
   @override
   List<Object?> get props => [id, type, qty, order, actuals];
 }
+
+class MonthlyPlanProduksiModel extends Equatable {
+  final int id;
+  final DateTime startTime;
+  final DateTime endTime;
+  final List<MonthlyPlanProduksiDetailModel> details;
+
+  const MonthlyPlanProduksiModel({required this.id, required this.startTime, required this.endTime, required this.details});
+
+  factory MonthlyPlanProduksiModel.fromSupabase(Map<String, dynamic> json, List<Map<String, dynamic>> actuals) {
+    return MonthlyPlanProduksiModel(
+      id: json['id'],
+      startTime: DateTime.parse(json['start_time']),
+      endTime: DateTime.parse(json['end_time']),
+      details:
+          (json['monthly_production_plan_detail'] as List<dynamic>?)?.map((e) => MonthlyPlanProduksiDetailModel.fromSupabase(e, actuals)).toList() ??
+              [],
+    );
+  }
+
+  @override
+  List<Object?> get props => [id, startTime, endTime, details];
+}
+
+class MonthlyPlanProduksiDetailModel extends Equatable {
+  final int id;
+  final ProductionTypeModel type;
+  final int qty;
+  final int order;
+  final List<ProductionActualModel> actuals;
+
+  const MonthlyPlanProduksiDetailModel({required this.id, required this.type, required this.qty, required this.order, required this.actuals});
+
+  factory MonthlyPlanProduksiDetailModel.fromSupabase(Map<String, dynamic> json, List<Map<String, dynamic>> actuals) {
+    return MonthlyPlanProduksiDetailModel(
+      id: json['id'],
+      type: ProductionTypeModel.fromSupabase(json['master_production_type_header']),
+      qty: json['production_qty'],
+      order: json['order'],
+      actuals: actuals
+          .where((e) => e['production_plan_detail']['master_production_type_header']['id'] == json['master_production_type_header']['id'])
+          .map((f) => ProductionActualModel.fromSupabase(f))
+          .toList(),
+    );
+  }
+
+  @override
+  List<Object?> get props => [id, type, qty, order, actuals];
+}

@@ -1,7 +1,9 @@
 import 'dart:math';
 
+import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:yanmar_app/bloc/monthly_plan_produksi_data_fetcher_bloc/monthly_plan_produksi_data_fetcher_bloc.dart';
 import 'package:yanmar_app/bloc/plan_produksi_data_fetcher/plan_produksi_data_fetcher_bloc.dart';
 import 'package:intl/intl.dart';
 import 'package:yanmar_app/models/plan_produksi_model.dart';
@@ -21,23 +23,33 @@ class AssemblyPage extends StatefulWidget {
 
 class _AssemblyPageState extends State<AssemblyPage> {
   final PlanProduksiDataFetcherBloc _bloc = PlanProduksiDataFetcherBloc();
+  final MonthlyPlanProduksiDataFetcherBloc _monthlyBloc = MonthlyPlanProduksiDataFetcherBloc();
 
   @override
   void initState() {
     _bloc.add(const FetchPlanProduksiData());
+    _monthlyBloc.add(FetchMonthlyPlanProduksiData());
     super.initState();
   }
 
   @override
   void dispose() {
     _bloc.close();
+    _monthlyBloc.close();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    return BlocProvider(
-      create: (context) => _bloc,
+    return MultiBlocProvider(
+      providers: [
+        BlocProvider(
+          create: (context) => _bloc,
+        ),
+        BlocProvider(
+          create: (context) => _monthlyBloc,
+        ),
+      ],
       child: Scaffold(
         appBar: AppBar(
           leading: Center(
@@ -99,14 +111,66 @@ class _AssemblyPageState extends State<AssemblyPage> {
             )
           ],
         ),
-        body: const Column(
+        body: Column(
           children: [
-            Center(child: AssemblyTable()),
+            const Center(child: AssemblyTable()),
+            const Flexible(
+              child: Padding(
+                padding: EdgeInsets.only(top: 10.0),
+                child: SummaryBottom(),
+              ),
+            ),
             Flexible(
-                child: Padding(
-              padding: EdgeInsets.only(top: 10.0),
-              child: SummaryBottom(),
-            )),
+              flex: 5,
+              child: BlocBuilder<MonthlyPlanProduksiDataFetcherBloc, MonthlyPlanProduksiDataFetcherState>(
+                builder: (context, state) {
+                  if (state is MonthlyPlanProduksiDataFetcherDone) {
+                    return Center(
+                      child: BarChart(
+                        BarChartData(
+                          titlesData: FlTitlesData(
+                            show: true,
+                            bottomTitles: AxisTitles(
+                              sideTitles: SideTitles(
+                                showTitles: true,
+                                getTitlesWidget: (index, meta) {
+                                  return SideTitleWidget(
+                                    axisSide: meta.axisSide,
+                                    child: Text(state.result.expand((e) => e.details).map((f) => f.type).toList().elementAt(index.toInt()).typeName),
+                                  );
+                                },
+                              ),
+                            ),
+                          ),
+                          barGroups: List.generate(
+                            state.result.expand((e) => e.details).map((f) => f.type).toSet().length,
+                            (index) => BarChartGroupData(
+                              x: index,
+                              barRods: [
+                                BarChartRodData(
+                                  toY: state.result.expand((e) => e.details).elementAt(index).qty.toDouble(),
+                                  color: Colors.grey,
+                                  rodStackItems: [
+                                    BarChartRodStackItem(
+                                      0,
+                                      state.result.expand((e) => e.details).elementAt(index).actuals.length.toDouble(),
+                                      Colors.green,
+                                    ),
+                                  ],
+                                )
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                    );
+                  } else if (state is MonthlyPlanProduksiDataFetcherFailed) {
+                    return Center(child: Text('Failed to load graph: ${state.message}'));
+                  }
+                  return Container();
+                },
+              ),
+            )
           ],
         ),
       ),
@@ -237,7 +301,7 @@ class _AssemblyPageState extends State<AssemblyPage> {
     }
 
     return late.isNotEmpty
-        ? Duration(seconds: late.fold(0, (total, e) => total + e.type.estimatedProductionTime.inSeconds))
+        ? Duration(seconds: late.fold(0, (total, e) => total + e.type.estimatedProductionTime!.inSeconds))
         : const Duration(seconds: 0);
   }
 }
@@ -589,7 +653,7 @@ List<DataRow> generateTable({required List<PlanProduksiModel> list, required int
     int estimatedTime = 0;
 
     for (var detail in list.firstWhere((e) => e.startTime == startTime).details) {
-      estimatedTime += detail.qty * detail.type.estimatedProductionTime.inSeconds;
+      estimatedTime += detail.qty * detail.type.estimatedProductionTime!.inSeconds;
     }
 
     widgets.add(Text('${Duration(seconds: estimatedTime).inMinutes} min'));

@@ -136,4 +136,29 @@ class SupabaseRepository {
 
     return checklistModel;
   }
+
+  /* -------------------------- Monthly Plan Produksi ------------------------- */
+  Future<List<MonthlyPlanProduksiModel>> getMonthlyPlanProduksi({required DateTime startTime, required DateTime endTime}) async {
+    final result = await _client
+        .from('monthly_production_plan_header')
+        .select('id, start_time, end_time, monthly_production_plan_detail(id, master_production_type_header(id, type_name), production_qty, order)')
+        .gte('start_time', startTime.toUtc().toIso8601String())
+        .lte('end_time', endTime.toUtc().toIso8601String())
+        .isFilter('deleted_at', null)
+        .order('order', ascending: true, referencedTable: 'monthly_production_plan_detail');
+
+    final actuals = await _client
+        .from('production_actual')
+        .select('id, production_plan_detail(id, master_production_type_header(id, type_name)), recorded_time')
+        .gte('recorded_time', startTime.toUtc().toIso8601String())
+        .lte('recorded_time', endTime.toUtc().toIso8601String())
+        .isFilter('deleted_at', null)
+        .order('recorded_time', ascending: true);
+
+    // print(actuals);
+
+    final List<MonthlyPlanProduksiModel> monthlyPlanProduksiModel = result.map((e) => MonthlyPlanProduksiModel.fromSupabase(e, actuals)).toList();
+
+    return monthlyPlanProduksiModel;
+  }
 }
