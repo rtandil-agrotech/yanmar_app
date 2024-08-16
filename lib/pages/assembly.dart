@@ -166,6 +166,7 @@ class _AssemblyPageState extends State<AssemblyPage> {
         int accumulatedQty = 0;
         int planGenerated = 0;
 
+        outerloop:
         for (var row in list) {
           for (var detail in row.details) {
             accumulatedQty += detail.qty;
@@ -178,7 +179,12 @@ class _AssemblyPageState extends State<AssemblyPage> {
                 generatedCell++;
 
                 if (countActualsInRow + planGenerated == maxQtyInRow) {
-                  late.add(detail);
+                  if (list.indexOf(row) == list.length - 1) {
+                    for (int j = countActualsInRow + planGenerated; j < detail.qty; j++) {
+                      late.add(detail);
+                    }
+                  }
+                  break outerloop;
                 }
               }
             }
@@ -229,6 +235,7 @@ class _AssemblyPageState extends State<AssemblyPage> {
         int accumulatedQty = 0;
         int planGenerated = 0;
 
+        outerloop:
         for (var row in list) {
           for (var detail in row.details) {
             accumulatedQty += detail.qty;
@@ -241,7 +248,12 @@ class _AssemblyPageState extends State<AssemblyPage> {
                 generatedCell++;
 
                 if (countActualsInRow + planGenerated == maxQtyInRow) {
-                  late.add(detail);
+                  if (list.indexOf(row) == list.length - 1) {
+                    for (int j = countActualsInRow + planGenerated; j < detail.qty; j++) {
+                      late.add(detail);
+                    }
+                  }
+                  break outerloop;
                 }
               }
             }
@@ -432,6 +444,7 @@ class SummaryBottom extends StatelessWidget {
         int accumulatedQty = 0;
         int planGenerated = 0;
 
+        outerloop:
         for (var row in list) {
           for (var detail in row.details) {
             accumulatedQty += detail.qty;
@@ -444,7 +457,12 @@ class SummaryBottom extends StatelessWidget {
                 generatedCell++;
 
                 if (countActualsInRow + planGenerated == maxQtyInRow) {
-                  late.add(detail);
+                  if (list.indexOf(row) == list.length - 1) {
+                    for (int j = countActualsInRow + planGenerated; j < detail.qty; j++) {
+                      late.add(detail);
+                    }
+                  }
+                  break outerloop;
                 }
               }
             }
