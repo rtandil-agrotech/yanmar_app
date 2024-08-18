@@ -1,5 +1,4 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:yanmar_app/models/checklist_model.dart';
 import 'package:yanmar_app/models/delivery_model.dart';
 import 'package:yanmar_app/models/plan_produksi_model.dart';
 import 'package:yanmar_app/models/rack_model.dart';
