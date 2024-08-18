@@ -9,7 +9,7 @@ part 'rack_data_fetcher_state.dart';
 
 class RackDataFetcherBloc extends Bloc<RackDataFetcherEvent, RackDataFetcherState> {
   RackDataFetcherBloc() : super(RackDataFetcherInitial()) {
-    final DateTime currentTime = DateTime.now().add(Duration(days: 1));
+    final DateTime currentTime = DateTime.now();
 
     on<FetchRackData>((event, emit) async {
       emit(RackDataFetcherLoading());

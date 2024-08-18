@@ -10,7 +10,7 @@ part 'plan_produksi_data_fetcher_state.dart';
 
 class PlanProduksiDataFetcherBloc extends Bloc<PlanProduksiDataFetcherEvent, PlanProduksiDataFetcherState> {
   PlanProduksiDataFetcherBloc() : super(PlanProduksiDataFetcherInitial()) {
-    DateTime now = DateTime.parse('2024-08-19');
+    DateTime now = DateTime.now();
 
     // Start of the day
     final DateTime startOfDay = DateTime(now.year, now.month, now.day, 0, 0, 0);
