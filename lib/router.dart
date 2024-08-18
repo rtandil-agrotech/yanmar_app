@@ -7,7 +7,7 @@ import 'package:yanmar_app/pages/home.dart';
 final router = GoRouter(
   // initialLocation: ChecklistPage.route,
   routes: [
-    GoRoute(path: '/', builder: (context, state) => HomePage()),
+    GoRoute(path: '/', builder: (context, state) => const HomePage()),
     GoRoute(path: ChecklistPage.route, builder: (context, state) => const ChecklistPage()),
     GoRoute(path: DeliveryPage.route, builder: (context, state) => const DeliveryPage()),
     GoRoute(path: AssemblyPage.route, builder: (context, state) => const AssemblyPage())
