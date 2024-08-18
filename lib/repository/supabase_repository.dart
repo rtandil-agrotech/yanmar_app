@@ -99,7 +99,8 @@ class SupabaseRepository {
         .from('master_rack')
         .select('id, rack_name, master_op_assembly(id, assembly_name, rack_placement)')
         .isFilter('deleted_at', null)
-        .order('rack_name', ascending: true);
+        .order('rack_name', ascending: true)
+        .order('rack_placement', referencedTable: 'master_op_assembly', ascending: true);
 
     final List<RackModel> rackModel = [];
 

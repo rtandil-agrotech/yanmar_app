@@ -182,21 +182,27 @@ class PartsPage extends StatelessWidget {
       padding: const EdgeInsets.only(left: 20.0, right: 20.0),
       child: Column(
         children: [
-          StreamBuilder(
-            stream: Stream.periodic(const Duration(seconds: 1)),
-            builder: ((context, snapshot) => Align(
-                  alignment: Alignment.centerRight,
-                  child: Text(
-                    'TIME REMAINING: ${_printDuration(data.startTime.add(const Duration(minutes: 60)).difference(DateTime.now()))}',
-                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 20, color: Colors.amber),
-                  ),
-                )),
-          ),
           Padding(
             padding: const EdgeInsets.only(top: 10.0, bottom: 5.0),
-            child: Text(
-              'Rak ${data.rackName}',
-              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
+            child: Stack(
+              children: [
+                Center(
+                  child: Text(
+                    'Rak ${data.rackName}',
+                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 24),
+                  ),
+                ),
+                StreamBuilder(
+                  stream: Stream.periodic(const Duration(seconds: 1)),
+                  builder: ((context, snapshot) => Align(
+                        alignment: Alignment.centerRight,
+                        child: Text(
+                          'TIME REMAINING: ${_printDuration(data.startTime.add(const Duration(minutes: 60)).difference(DateTime.now()))}',
+                          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 20, color: Colors.amber),
+                        ),
+                      )),
+                ),
+              ],
             ),
           ),
           const Divider(
