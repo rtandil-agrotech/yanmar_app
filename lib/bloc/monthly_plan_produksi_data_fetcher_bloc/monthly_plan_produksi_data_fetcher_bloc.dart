@@ -1,6 +1,5 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:equatable/equatable.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:yanmar_app/locator.dart';
 import 'package:yanmar_app/models/plan_produksi_model.dart';
 import 'package:yanmar_app/repository/supabase_repository.dart';
