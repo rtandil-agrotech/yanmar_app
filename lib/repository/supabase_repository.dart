@@ -126,7 +126,11 @@ class SupabaseRepository {
       }
 
       RackModel model = RackModel.fromSupabase(
-          result[i], planHeader.isNotEmpty ? planHeader[0]['production_plan_detail'] : null, planHeader[0]['start_time'], planHeader[0]['end_time']);
+        result[i],
+        planHeader.isNotEmpty ? planHeader[0]['production_plan_detail'] : null,
+        planHeader.isNotEmpty ? planHeader[0]['start_time'] : null,
+        planHeader.isNotEmpty ? planHeader[0]['end_time'] : null,
+      );
       rackModel.add(model);
     }
 

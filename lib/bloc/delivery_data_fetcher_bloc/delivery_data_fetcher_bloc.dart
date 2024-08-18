@@ -10,7 +10,7 @@ part 'delivery_data_fetcher_state.dart';
 
 class DeliveryDataFetcherBloc extends Bloc<DeliveryDataFetcherEvent, DeliveryDataFetcherState> {
   DeliveryDataFetcherBloc() : super(DeliveryDataFetcherInitial()) {
-    DateTime now = DateTime.now();
+    DateTime now = DateTime.parse('2024-08-19');
 
     // Start of the day
     final DateTime startOfDay = DateTime(now.year, now.month, now.day, 0, 0, 0);

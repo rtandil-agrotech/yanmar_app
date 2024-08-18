@@ -194,13 +194,22 @@ class PartsPage extends StatelessWidget {
                 ),
                 StreamBuilder(
                   stream: Stream.periodic(const Duration(seconds: 1)),
-                  builder: ((context, snapshot) => Align(
-                        alignment: Alignment.centerRight,
-                        child: Text(
-                          'TIME REMAINING: ${_printDuration(data.startTime.add(const Duration(minutes: 60)).difference(DateTime.now()))}',
-                          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 20, color: Colors.amber),
-                        ),
-                      )),
+                  builder: ((context, snapshot) {
+                    final now = DateTime.now();
+
+                    if (data.endTime?.isBefore(now) ?? false) {
+                      print('fetch');
+                      BlocProvider.of<RackDataFetcherBloc>(context).add(FetchRackData());
+                    }
+
+                    return Align(
+                      alignment: Alignment.centerRight,
+                      child: Text(
+                        'TIME REMAINING: ${data.startTime != null ? _printDuration(data.startTime!.add(const Duration(minutes: 60)).difference(now)) : 'N/A'}',
+                        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 20, color: Colors.amber),
+                      ),
+                    );
+                  }),
                 ),
               ],
             ),
@@ -217,6 +226,22 @@ class PartsPage extends StatelessWidget {
                     children: [
                       ...() {
                         List<Widget> widgets = [];
+
+                        if (data.startTime == null) {
+                          return [
+                            const Icon(
+                              Icons.warning,
+                              size: 40,
+                            ),
+                            const SizedBox(
+                              height: 5,
+                            ),
+                            const Text(
+                              'No Schedule Found for this time period',
+                              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
+                            ),
+                          ];
+                        }
 
                         for (var detail in data.details) {
                           widgets.addAll([

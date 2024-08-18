@@ -5,8 +5,8 @@ import 'package:yanmar_app/models/op_assembly_model.dart';
 class RackModel extends Equatable {
   final int id;
   final String rackName;
-  final DateTime startTime;
-  final DateTime endTime;
+  final DateTime? startTime;
+  final DateTime? endTime;
   final List<OpAssemblyModel> opAssemblyModel;
   final List<ChecklistDetailModel> details;
 
@@ -25,8 +25,8 @@ class RackModel extends Equatable {
     return RackModel(
       id: map['id'],
       rackName: (map['rack_name'] as int).toString(),
-      startTime: DateTime.parse(startTime),
-      endTime: DateTime.parse(endTime),
+      startTime: startTime != null ? DateTime.parse(startTime) : null,
+      endTime: endTime != null ? DateTime.parse(endTime) : null,
       opAssemblyModel: opAssy,
       details: (details ?? []).map((e) => ChecklistDetailModel.fromSupabase(e)).toList(),
     );
