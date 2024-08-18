@@ -103,6 +103,9 @@ class SupabaseRepository {
 
     final List<RackModel> rackModel = [];
 
+    // Move time by 1 hour
+    final time = currentTime.subtract(const Duration(hours: 1));
+
     for (int i = 0; i < result.length; i++) {
       final opAssIdList = (result[i]['master_op_assembly'] as List).map((e) => e['id']).toList();
 
@@ -110,8 +113,8 @@ class SupabaseRepository {
           .from('production_plan_header')
           .select(
               'id, start_time, end_time, production_plan_detail(id, master_production_type_header(id, type_name, master_production_type_detail(id, master_parts(id, op_assembly_id, part_code, part_name), part_qty)) ,production_qty, order)')
-          .gte('end_time', currentTime.toUtc().toIso8601String())
-          .lte('start_time', currentTime.toUtc().toIso8601String())
+          .gte('end_time', time.toUtc().toIso8601String())
+          .lte('start_time', time.toUtc().toIso8601String())
           .inFilter('production_plan_detail.master_production_type_header.master_production_type_detail.master_parts.op_assembly_id', opAssIdList)
           .isFilter('deleted_at', null)
           .order('order', ascending: true, referencedTable: 'production_plan_detail')
