@@ -19,6 +19,7 @@ dependencies:
   intl: ^0.19.0
   equatable: ^2.0.5
   fl_chart: ^0.68.0
+  percent_indicator: ^4.2.3
 
 dev_dependencies:
   flutter_test:
@@ -33,6 +34,15 @@ flutter:
   fonts:
     - family: Roboto
       fonts:
-        - asset: assets/fonts/Roboto-Regular.ttf
-        - asset: assets/fonts/Roboto-Bold.ttf
+        - asset: assets/fonts/Roboto/Roboto-Regular.ttf
+        - asset: assets/fonts/Roboto/Roboto-Bold.ttf
           weight: 700
+    - family: Gotham
+      fonts:
+        - asset: assets/fonts/Gotham/GothamBlack.ttf
+        - asset: assets/fonts/Gotham/GothamBold.ttf
+          weight: 700
+        - asset: assets/fonts/Gotham/GothamLight.ttf
+          weight: 400
+        - asset: assets/fonts/Gotham/GothamMedium.ttf
+          weight: 500

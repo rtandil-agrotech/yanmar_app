@@ -15,8 +15,6 @@ class MonthlyPlanProduksiDataFetcherBloc extends Bloc<MonthlyPlanProduksiDataFet
     final DateTime startTime = DateTime(now.year, now.month, 1);
     final DateTime endTime = DateTime(now.year, now.month + 1, 1).subtract(const Duration(seconds: 1));
 
-    subs = _repo.subscribeToProductionActualChanges((p0) => add(FetchMonthlyPlanProduksiData()));
-
     on<FetchMonthlyPlanProduksiData>((event, emit) async {
       emit(MonthlyPlanProduksiDataFetcherLoading());
       try {
@@ -29,11 +27,4 @@ class MonthlyPlanProduksiDataFetcherBloc extends Bloc<MonthlyPlanProduksiDataFet
   }
 
   final _repo = locator.get<SupabaseRepository>();
-  late final RealtimeChannel subs;
-
-  @override
-  Future<void> close() {
-    _repo.unsubscribe(subs);
-    return super.close();
-  }
 }

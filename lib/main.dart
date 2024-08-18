@@ -27,7 +27,7 @@ class MainApp extends StatelessWidget {
       routerConfig: router,
       theme: ThemeData(
         brightness: Brightness.dark,
-        fontFamily: 'Roboto',
+        fontFamily: 'Gotham',
       ),
     );
   }

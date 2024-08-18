@@ -3,6 +3,7 @@ import 'dart:math';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:percent_indicator/percent_indicator.dart';
 import 'package:yanmar_app/bloc/monthly_plan_produksi_data_fetcher_bloc/monthly_plan_produksi_data_fetcher_bloc.dart';
 import 'package:yanmar_app/bloc/plan_produksi_data_fetcher/plan_produksi_data_fetcher_bloc.dart';
 import 'package:intl/intl.dart';
@@ -57,7 +58,7 @@ class _AssemblyPageState extends State<AssemblyPage> {
             DateFormat('EEEE, d MMMM yyyy').format(DateTime.now()),
             style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.amber),
           )),
-          leadingWidth: 200,
+          leadingWidth: 300,
           title: const Text('ASSEMBLY BOARD'),
           centerTitle: true,
           actions: [
@@ -111,21 +112,21 @@ class _AssemblyPageState extends State<AssemblyPage> {
             )
           ],
         ),
-        body: const Column(
+        body: Column(
           children: [
-            Center(child: AssemblyTable()),
-            Flexible(
-              child: Padding(
+            const Center(child: AssemblyTable()),
+            ConstrainedBox(
+              constraints: BoxConstraints.loose(const Size.fromHeight(100)),
+              child: const Padding(
                 padding: EdgeInsets.only(top: 10.0),
                 child: SummaryBottom(),
               ),
             ),
-            Flexible(
-                flex: 5,
+            const Flexible(
                 child: Padding(
-                  padding: EdgeInsets.only(bottom: 20.0),
-                  child: GraphWidget(),
-                ))
+              padding: EdgeInsets.only(bottom: 20.0),
+              child: GraphWidgetAlter(),
+            ))
           ],
         ),
       ),
@@ -171,7 +172,6 @@ class _AssemblyPageState extends State<AssemblyPage> {
         int accumulatedQty = 0;
         int planGenerated = 0;
 
-        outerloop:
         for (var row in list) {
           for (var detail in row.details) {
             accumulatedQty += detail.qty;
@@ -183,13 +183,11 @@ class _AssemblyPageState extends State<AssemblyPage> {
 
                 generatedCell++;
 
-                if (countActualsInRow + planGenerated == maxQtyInRow) {
+                if (countActualsInRow + planGenerated > maxQtyInRow) {
+                  // If last row
                   if (list.indexOf(row) == list.length - 1) {
-                    for (int j = countActualsInRow + planGenerated; j < detail.qty; j++) {
-                      late.add(detail);
-                    }
+                    late.add(detail);
                   }
-                  break outerloop;
                 }
               }
             }
@@ -240,7 +238,6 @@ class _AssemblyPageState extends State<AssemblyPage> {
         int accumulatedQty = 0;
         int planGenerated = 0;
 
-        outerloop:
         for (var row in list) {
           for (var detail in row.details) {
             accumulatedQty += detail.qty;
@@ -252,13 +249,11 @@ class _AssemblyPageState extends State<AssemblyPage> {
 
                 generatedCell++;
 
-                if (countActualsInRow + planGenerated == maxQtyInRow) {
+                if (countActualsInRow + planGenerated > maxQtyInRow) {
+                  // If last row
                   if (list.indexOf(row) == list.length - 1) {
-                    for (int j = countActualsInRow + planGenerated; j < detail.qty; j++) {
-                      late.add(detail);
-                    }
+                    late.add(detail);
                   }
-                  break outerloop;
                 }
               }
             }
@@ -273,6 +268,61 @@ class _AssemblyPageState extends State<AssemblyPage> {
   }
 }
 
+class GraphWidgetAlter extends StatelessWidget {
+  const GraphWidgetAlter({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return BlocBuilder<MonthlyPlanProduksiDataFetcherBloc, MonthlyPlanProduksiDataFetcherState>(
+      builder: (context, state) {
+        if (state is MonthlyPlanProduksiDataFetcherLoading) {
+          return const Center(
+            child: CircularProgressIndicator(),
+          );
+        } else if (state is MonthlyPlanProduksiDataFetcherDone) {
+          final data = state.result.expand((e) => e.details).toList().where((f) => f.actuals.length / f.qty * 100 >= 1);
+
+          return Wrap(
+            runSpacing: 30,
+            spacing: 30,
+            children: List.generate(
+              data.length,
+              (index) => SizedBox(
+                width: 200,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(data.elementAt(index).type.typeName),
+                        Text(
+                            '${data.map((e) => e.actuals.length).toList().elementAt(index).toStringAsFixed(0)} / ${data.map((e) => e.qty).toList().elementAt(index).toStringAsFixed(0)}'),
+                      ],
+                    ),
+                    LinearPercentIndicator(
+                      lineHeight: 20,
+                      barRadius: const Radius.circular(10),
+                      // trailing: Text('${data.map((e) => e.actuals.length / e.qty * 100).toList().elementAt(index).toStringAsFixed(0)} %'),
+                      percent: data.map((e) => e.actuals.length / e.qty).toList().elementAt(index),
+                      backgroundColor: Colors.grey,
+                      progressColor: Colors.green,
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          );
+        } else if (state is MonthlyPlanProduksiDataFetcherFailed) {
+          return Center(child: Text('Failed to load graph: ${state.message}'));
+        }
+        return Container();
+      },
+    );
+  }
+}
+
 class GraphWidget extends StatelessWidget {
   const GraphWidget({
     super.key,
@@ -282,7 +332,13 @@ class GraphWidget extends StatelessWidget {
   Widget build(BuildContext context) {
     return BlocBuilder<MonthlyPlanProduksiDataFetcherBloc, MonthlyPlanProduksiDataFetcherState>(
       builder: (context, state) {
-        if (state is MonthlyPlanProduksiDataFetcherDone) {
+        if (state is MonthlyPlanProduksiDataFetcherLoading) {
+          return const Center(
+            child: CircularProgressIndicator(),
+          );
+        } else if (state is MonthlyPlanProduksiDataFetcherDone) {
+          final data = state.result.expand((e) => e.details).toList().where((f) => f.actuals.length / f.qty * 100 >= 1);
+
           return Center(
             child: BarChart(
               BarChartData(
@@ -293,8 +349,7 @@ class GraphWidget extends StatelessWidget {
                       reservedSize: 50,
                       showTitles: true,
                       getTitlesWidget: (index, meta) {
-                        final percent =
-                            state.result.expand((e) => e.details).map((f) => f.actuals.length / f.qty * 100).toList().elementAt(index.toInt());
+                        final percent = data.map((f) => f.actuals.length / f.qty * 100).toList().elementAt(index.toInt());
 
                         return SideTitleWidget(
                           axisSide: meta.axisSide,
@@ -309,30 +364,31 @@ class GraphWidget extends StatelessWidget {
                   bottomTitles: AxisTitles(
                     sideTitles: SideTitles(
                       showTitles: true,
-                      reservedSize: 50,
+                      reservedSize: 80,
                       getTitlesWidget: (index, meta) {
                         return SideTitleWidget(
                           axisSide: meta.axisSide,
-                          child: Text(state.result.expand((e) => e.details).map((f) => f.type).toList().elementAt(index.toInt()).typeName),
+                          angle: 1,
+                          child: Text(data.map((f) => f.type).toList().elementAt(index.toInt()).typeName),
                         );
                       },
                     ),
                   ),
                 ),
                 barGroups: List.generate(
-                  state.result.expand((e) => e.details).map((f) => f.type).toSet().length,
+                  data.map((f) => f.type).toSet().length,
                   (index) => BarChartGroupData(
                     x: index,
                     barRods: [
                       BarChartRodData(
-                        toY: state.result.expand((e) => e.details).elementAt(index).qty.toDouble(),
+                        toY: data.elementAt(index).qty.toDouble(),
                         color: Colors.grey,
                         width: 20,
                         borderRadius: const BorderRadius.all(Radius.zero),
                         rodStackItems: [
                           BarChartRodStackItem(
                             0,
-                            state.result.expand((e) => e.details).elementAt(index).actuals.length.toDouble(),
+                            data.elementAt(index).actuals.length.toDouble(),
                             Colors.green,
                           ),
                         ],
@@ -470,7 +526,6 @@ class SummaryBottom extends StatelessWidget {
         int accumulatedQty = 0;
         int planGenerated = 0;
 
-        outerloop:
         for (var row in list) {
           for (var detail in row.details) {
             accumulatedQty += detail.qty;
@@ -482,15 +537,15 @@ class SummaryBottom extends StatelessWidget {
 
                 generatedCell++;
 
-                if (countActualsInRow + planGenerated == maxQtyInRow) {
+                if (countActualsInRow + planGenerated > maxQtyInRow) {
+                  // If last row
                   if (list.indexOf(row) == list.length - 1) {
-                    for (int j = countActualsInRow + planGenerated; j < detail.qty; j++) {
-                      late.add(detail);
-                    }
+                    late.add(detail);
                   }
-                  break outerloop;
                 }
               }
+
+              // print('$generatedCell ; $planGenerated');
             }
           }
         }
@@ -630,11 +685,15 @@ List<DataRow> generateTable({required List<PlanProduksiModel> list, required int
     final Set<ProductionTypeModel> uniqueActualTypesInRow = {};
 
     // Time
-    final DataCell timeCell = DataCell(Text('${formatter.format(startTime.toLocal())} - ${formatter.format(endTime.toLocal())}'));
+    final DataCell timeCell = DataCell(Center(child: Text('${formatter.format(startTime.toLocal())} - ${formatter.format(endTime.toLocal())}')));
     // Plan
-    final DataCell planCell = DataCell(Column(mainAxisSize: MainAxisSize.min, children: row.details.map((e) => Text(e.type.typeName)).toList()));
+    final DataCell planCell = DataCell(Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: row.details.map((e) => Text(e.type.typeName)).toList()));
     // Qty
-    final DataCell qtyCell = DataCell(Column(mainAxisSize: MainAxisSize.min, children: row.details.map((e) => Text(e.qty.toString())).toList()));
+    final DataCell qtyCell =
+        DataCell(Center(child: Column(mainAxisSize: MainAxisSize.min, children: row.details.map((e) => Text(e.qty.toString())).toList())));
 
     final List<Widget> widgets = [];
 
@@ -650,9 +709,16 @@ List<DataRow> generateTable({required List<PlanProduksiModel> list, required int
               actuals.recordedTime.isAtSameMomentAs(startTime) ||
               actuals.recordedTime.isAtSameMomentAs(endTime)) {
             widgets.add(Container(
+              // margin: const EdgeInsets.all(5.0),
               constraints: const BoxConstraints.expand(),
               color: Colors.green,
-              child: Center(child: Text(detail.type.typeName, style: tableStyle)),
+              child: Center(
+                  child: Text(
+                detail.type.typeName,
+                style: tableStyle,
+                softWrap: true,
+                maxLines: 3,
+              )),
             ));
 
             generatedCell++;
@@ -682,9 +748,16 @@ List<DataRow> generateTable({required List<PlanProduksiModel> list, required int
             // Generate Plan based on qty of current detail
             for (int i = generatedCell; i < accumulatedQty; i++) {
               widgets.add(
-                ConstrainedBox(
-                  constraints: const BoxConstraints.expand(),
-                  child: Center(child: Text(detail.type.typeName, style: tableStyle)),
+                Container(
+                  margin: const EdgeInsets.all(5.0),
+                  constraints: BoxConstraints.loose(const Size.fromWidth(100)),
+                  child: Center(
+                      child: Text(
+                    detail.type.typeName,
+                    style: tableStyle,
+                    softWrap: true,
+                    maxLines: 3,
+                  )),
                 ),
               );
               planGenerated++;
