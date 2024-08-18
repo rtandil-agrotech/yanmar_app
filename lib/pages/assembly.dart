@@ -172,6 +172,7 @@ class _AssemblyPageState extends State<AssemblyPage> {
         int accumulatedQty = 0;
         int planGenerated = 0;
 
+        outerloop:
         for (var row in list) {
           for (var detail in row.details) {
             accumulatedQty += detail.qty;
@@ -183,15 +184,26 @@ class _AssemblyPageState extends State<AssemblyPage> {
 
                 generatedCell++;
 
-                if (countActualsInRow + planGenerated > maxQtyInRow) {
-                  // If last row
-                  if (list.indexOf(row) == list.length - 1) {
-                    late.add(detail);
-                  }
-                }
+                if (countActualsInRow + planGenerated == maxQtyInRow) break outerloop;
               }
             }
           }
+        }
+      }
+    }
+
+    int accumulatedQty2 = 0;
+
+    for (var row in list) {
+      for (var detail in row.details) {
+        accumulatedQty2 += detail.qty;
+
+        if (accumulatedQty2 > generatedCell) {
+          for (int i = 0; i < accumulatedQty2 - generatedCell; i++) {
+            late.add(detail);
+          }
+
+          generatedCell += accumulatedQty2 - generatedCell;
         }
       }
     }
@@ -238,6 +250,7 @@ class _AssemblyPageState extends State<AssemblyPage> {
         int accumulatedQty = 0;
         int planGenerated = 0;
 
+        outerloop:
         for (var row in list) {
           for (var detail in row.details) {
             accumulatedQty += detail.qty;
@@ -249,15 +262,26 @@ class _AssemblyPageState extends State<AssemblyPage> {
 
                 generatedCell++;
 
-                if (countActualsInRow + planGenerated > maxQtyInRow) {
-                  // If last row
-                  if (list.indexOf(row) == list.length - 1) {
-                    late.add(detail);
-                  }
-                }
+                if (countActualsInRow + planGenerated == maxQtyInRow) break outerloop;
               }
             }
           }
+        }
+      }
+    }
+
+    int accumulatedQty2 = 0;
+
+    for (var row in list) {
+      for (var detail in row.details) {
+        accumulatedQty2 += detail.qty;
+
+        if (accumulatedQty2 > generatedCell) {
+          for (int i = 0; i < accumulatedQty2 - generatedCell; i++) {
+            late.add(detail);
+          }
+
+          generatedCell += accumulatedQty2 - generatedCell;
         }
       }
     }
@@ -526,6 +550,7 @@ class SummaryBottom extends StatelessWidget {
         int accumulatedQty = 0;
         int planGenerated = 0;
 
+        outerloop:
         for (var row in list) {
           for (var detail in row.details) {
             accumulatedQty += detail.qty;
@@ -537,17 +562,26 @@ class SummaryBottom extends StatelessWidget {
 
                 generatedCell++;
 
-                if (countActualsInRow + planGenerated > maxQtyInRow) {
-                  // If last row
-                  if (list.indexOf(row) == list.length - 1) {
-                    late.add(detail);
-                  }
-                }
+                if (countActualsInRow + planGenerated == maxQtyInRow) break outerloop;
               }
-
-              // print('$generatedCell ; $planGenerated');
             }
           }
+        }
+      }
+    }
+
+    int accumulatedQty2 = 0;
+
+    for (var row in list) {
+      for (var detail in row.details) {
+        accumulatedQty2 += detail.qty;
+
+        if (accumulatedQty2 > generatedCell) {
+          for (int i = 0; i < accumulatedQty2 - generatedCell; i++) {
+            late.add(detail);
+          }
+
+          generatedCell += accumulatedQty2 - generatedCell;
         }
       }
     }
@@ -750,7 +784,7 @@ List<DataRow> generateTable({required List<PlanProduksiModel> list, required int
               widgets.add(
                 Container(
                   margin: const EdgeInsets.all(5.0),
-                  constraints: BoxConstraints.loose(const Size.fromWidth(100)),
+                  constraints: BoxConstraints.tight(const Size.fromWidth(60)),
                   child: Center(
                       child: Text(
                     detail.type.typeName,
