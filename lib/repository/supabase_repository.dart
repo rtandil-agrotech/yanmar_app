@@ -20,7 +20,8 @@ class SupabaseRepository {
         .gte('start_time', startTime.toUtc().toIso8601String())
         .lt('end_time', endTime.toUtc().toIso8601String())
         .isFilter('deleted_at', null)
-        .order('order', ascending: true, referencedTable: 'production_plan_detail');
+        .order('order', ascending: true, referencedTable: 'production_plan_detail')
+        .order('start_time', ascending: true);
 
     final List<PlanProduksiModel> planProduksiModel = result.map((e) => PlanProduksiModel.fromSupabase(e)).toList();
 
