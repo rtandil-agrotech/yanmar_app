@@ -9,10 +9,12 @@ part 'rack_data_fetcher_state.dart';
 
 class RackDataFetcherBloc extends Bloc<RackDataFetcherEvent, RackDataFetcherState> {
   RackDataFetcherBloc() : super(RackDataFetcherInitial()) {
+    final DateTime currentTime = DateTime.parse('2024-08-19 07:31');
+
     on<FetchRackData>((event, emit) async {
       emit(RackDataFetcherLoading());
       try {
-        final result = await _repo.getRackList();
+        final result = await _repo.getRackList(currentTime: currentTime);
         emit(RackDataFetcherDone(result));
       } catch (e) {
         print(e);

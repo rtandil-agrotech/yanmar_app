@@ -1,20 +1,17 @@
 import 'package:equatable/equatable.dart';
 import 'package:yanmar_app/models/production_actual_model.dart';
 import 'package:yanmar_app/models/production_type_model.dart';
-import 'package:yanmar_app/models/users_model.dart';
 
 class PlanProduksiModel extends Equatable {
   final int id;
   final DateTime startTime;
   final DateTime endTime;
-  final UserModel createdBy;
   final List<PlanProduksiDetailModel> details;
 
   const PlanProduksiModel({
     required this.id,
     required this.startTime,
     required this.endTime,
-    required this.createdBy,
     required this.details,
   });
 
@@ -23,13 +20,12 @@ class PlanProduksiModel extends Equatable {
       id: json['id'],
       startTime: DateTime.parse(json['start_time']),
       endTime: DateTime.parse(json['end_time']),
-      createdBy: UserModel.fromSupabase(json['users']),
       details: (json['production_plan_detail'] as List<dynamic>?)?.map((e) => PlanProduksiDetailModel.fromSupabase(e)).toList() ?? [],
     );
   }
 
   @override
-  List<Object?> get props => [id, startTime, endTime, createdBy, details];
+  List<Object?> get props => [id, startTime, endTime, details];
 }
 
 class PlanProduksiDetailModel extends Equatable {

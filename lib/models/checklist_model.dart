@@ -1,5 +1,4 @@
 import 'package:equatable/equatable.dart';
-import 'package:yanmar_app/extensions/psql_interval_formatter.dart';
 
 class ChecklistModel extends Equatable {
   final int id;
@@ -57,13 +56,11 @@ class ChecklistMasterProductionType extends Equatable {
   final int id;
   final String typeName;
   final List<ChecklistMasterProductionTypeDetail> details;
-  final Duration estimatedFulfillmentDuration;
 
   const ChecklistMasterProductionType({
     required this.id,
     required this.typeName,
     required this.details,
-    required this.estimatedFulfillmentDuration,
   });
 
   factory ChecklistMasterProductionType.fromSupabase(Map<String, dynamic> map) {
@@ -71,7 +68,6 @@ class ChecklistMasterProductionType extends Equatable {
       id: map['id'],
       typeName: map['type_name'],
       details: (map['master_production_type_detail'] as List?)?.map((e) => ChecklistMasterProductionTypeDetail.fromSupabase(e)).toList() ?? [],
-      estimatedFulfillmentDuration: (map['master_fulfillment'][0]['estimated_duration'] as String).parseInterval(),
     );
   }
 
@@ -80,7 +76,6 @@ class ChecklistMasterProductionType extends Equatable {
         id,
         typeName,
         details,
-        estimatedFulfillmentDuration,
       ];
 }
 

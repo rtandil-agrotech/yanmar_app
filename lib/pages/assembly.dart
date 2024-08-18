@@ -120,7 +120,12 @@ class _AssemblyPageState extends State<AssemblyPage> {
                 child: SummaryBottom(),
               ),
             ),
-            Flexible(flex: 5, child: GraphWidget())
+            Flexible(
+                flex: 5,
+                child: Padding(
+                  padding: EdgeInsets.only(bottom: 20.0),
+                  child: GraphWidget(),
+                ))
           ],
         ),
       ),
@@ -283,9 +288,28 @@ class GraphWidget extends StatelessWidget {
               BarChartData(
                 titlesData: FlTitlesData(
                   show: true,
+                  topTitles: AxisTitles(
+                    sideTitles: SideTitles(
+                      reservedSize: 50,
+                      showTitles: true,
+                      getTitlesWidget: (index, meta) {
+                        final percent =
+                            state.result.expand((e) => e.details).map((f) => f.actuals.length / f.qty * 100).toList().elementAt(index.toInt());
+
+                        return SideTitleWidget(
+                          axisSide: meta.axisSide,
+                          child: Text(
+                            '${percent.toStringAsFixed(0)} %',
+                            style: TextStyle(color: percent >= 100 ? Colors.green : Colors.white),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
                   bottomTitles: AxisTitles(
                     sideTitles: SideTitles(
                       showTitles: true,
+                      reservedSize: 50,
                       getTitlesWidget: (index, meta) {
                         return SideTitleWidget(
                           axisSide: meta.axisSide,
@@ -303,6 +327,8 @@ class GraphWidget extends StatelessWidget {
                       BarChartRodData(
                         toY: state.result.expand((e) => e.details).elementAt(index).qty.toDouble(),
                         color: Colors.grey,
+                        width: 20,
+                        borderRadius: const BorderRadius.all(Radius.zero),
                         rodStackItems: [
                           BarChartRodStackItem(
                             0,

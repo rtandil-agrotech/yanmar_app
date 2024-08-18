@@ -17,9 +17,9 @@ class SupabaseRepository {
     final result = await _client
         .from('production_plan_header')
         .select(
-            'id, start_time, end_time, users(id, username, user_roles(id, role_name)), production_plan_detail(id, master_production_type_header(id, type_name, estimated_production_duration) ,production_qty, order, production_actual(id, recorded_time))')
+            'id, start_time, end_time, production_plan_detail(id, master_production_type_header(id, type_name, estimated_production_duration) ,production_qty, order, production_actual(id, recorded_time))')
         .gte('start_time', startTime.toUtc().toIso8601String())
-        .lte('end_time', endTime.toUtc().toIso8601String())
+        .lt('end_time', endTime.toUtc().toIso8601String())
         .isFilter('deleted_at', null)
         .order('order', ascending: true, referencedTable: 'production_plan_detail');
 
@@ -56,7 +56,7 @@ class SupabaseRepository {
         .select(
             'id, start_time, end_time, production_plan_detail(id, master_production_type_header(id, type_name, estimated_production_duration, master_fulfillment(id, op_assembly_id, estimated_duration)) ,production_qty, order), item_requests(id, master_op_assembly(id, assembly_name), start_time, end_time), checklist_header(id, is_help_pressed)')
         .gte('start_time', startTime.toUtc().toIso8601String())
-        .lte('end_time', endTime.toUtc().toIso8601String())
+        .lt('end_time', endTime.toUtc().toIso8601String())
         .isFilter('deleted_at', null)
         .order('order', ascending: true, referencedTable: 'production_plan_detail');
 
@@ -94,47 +94,43 @@ class SupabaseRepository {
   }
 
   /* -------------------------------- CHECKLIST ------------------------------- */
-  Future<List<RackModel>> getRackList() async {
+  Future<List<RackModel>> getRackList({required DateTime currentTime}) async {
     final result = await _client
         .from('master_rack')
-        .select('id, rack_name, master_op_assembly(id, assembly_name)')
+        .select('id, rack_name, master_op_assembly(id, assembly_name, rack_placement)')
         .isFilter('deleted_at', null)
         .order('rack_name', ascending: true);
 
-    final List<RackModel> rackModel = result.map((e) => RackModel.fromSupabase(e)).toList();
+    final List<RackModel> rackModel = [];
 
-    return rackModel;
-  }
+    for (int i = 0; i < result.length; i++) {
+      final opAssIdList = (result[i]['master_op_assembly'] as List).map((e) => e['id']).toList();
 
-  Future<ChecklistModel?> getPartListForOpAssembly({required int opAssemblyId, required DateTime currentTime}) async {
-    // Things to get:
-    // - Based on plan header id on time
-    // - Get plan detail to know type & qty
-    // - Get part per type
-    // - Filter part by op assembly
+      final planHeader = await _client
+          .from('production_plan_header')
+          .select(
+              'id, start_time, end_time, production_plan_detail(id, master_production_type_header(id, type_name, master_production_type_detail(id, master_parts(id, op_assembly_id, part_code, part_name), part_qty)) ,production_qty, order)')
+          .gte('end_time', currentTime.toUtc().toIso8601String())
+          .lte('start_time', currentTime.toUtc().toIso8601String())
+          .inFilter('production_plan_detail.master_production_type_header.master_production_type_detail.master_parts.op_assembly_id', opAssIdList)
+          .isFilter('deleted_at', null)
+          .order('order', ascending: true, referencedTable: 'production_plan_detail')
+          .limit(1);
 
-    final planHeader = await _client
-        .from('production_plan_header')
-        .select(
-            'id, start_time, end_time, production_plan_detail(id, master_production_type_header(id, type_name, master_production_type_detail(id, master_parts(id, op_assembly_id, part_code, part_name), part_qty), master_fulfillment(id, op_assembly_id, estimated_duration)) ,production_qty, order)')
-        .gte('end_time', currentTime.toUtc().toIso8601String())
-        .lte('start_time', currentTime.toUtc().toIso8601String())
-        .eq('production_plan_detail.master_production_type_header.master_production_type_detail.master_parts.op_assembly_id', opAssemblyId)
-        .eq('production_plan_detail.master_production_type_header.master_fulfillment.op_assembly_id', opAssemblyId)
-        .isFilter('deleted_at', null)
-        .order('order', ascending: true, referencedTable: 'production_plan_detail')
-        .limit(1);
-
-    // Remove all parts where op assembly id is not opAssemblyId from planHeaderList
-    if (planHeader.isNotEmpty) {
-      for (var details in planHeader[0]['production_plan_detail']) {
-        (details['master_production_type_header']['master_production_type_detail'] as List).removeWhere((element) => element['master_parts'] == null);
+      // Remove all parts where op assembly id is not opAssemblyId from planHeaderList
+      if (planHeader.isNotEmpty) {
+        for (var details in planHeader[0]['production_plan_detail']) {
+          (details['master_production_type_header']['master_production_type_detail'] as List)
+              .removeWhere((element) => element['master_parts'] == null);
+        }
       }
+
+      RackModel model = RackModel.fromSupabase(
+          result[i], planHeader.isNotEmpty ? planHeader[0]['production_plan_detail'] : null, planHeader[0]['start_time'], planHeader[0]['end_time']);
+      rackModel.add(model);
     }
 
-    final ChecklistModel? checklistModel = planHeader.map((e) => ChecklistModel.fromSupabase(e)).toList().firstOrNull;
-
-    return checklistModel;
+    return rackModel;
   }
 
   /* -------------------------- Monthly Plan Produksi ------------------------- */
