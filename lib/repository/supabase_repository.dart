@@ -149,7 +149,8 @@ class SupabaseRepository {
         .gte('start_time', startTime.toUtc().toIso8601String())
         .lte('end_time', endTime.toUtc().toIso8601String())
         .isFilter('deleted_at', null)
-        .order('order', ascending: true, referencedTable: 'monthly_production_plan_detail');
+        .order('order', ascending: true, referencedTable: 'monthly_production_plan_detail')
+        .order('start_time', ascending: true);
 
     final actuals = await _client
         .from('production_actual')

@@ -682,7 +682,10 @@ List<DataRow> generateTable({required List<PlanProduksiModel> list, required int
             // Generate Plan based on qty of current detail
             for (int i = generatedCell; i < accumulatedQty; i++) {
               widgets.add(
-                Text(detail.type.typeName, style: tableStyle),
+                ConstrainedBox(
+                  constraints: const BoxConstraints.expand(),
+                  child: Center(child: Text(detail.type.typeName, style: tableStyle)),
+                ),
               );
               planGenerated++;
 

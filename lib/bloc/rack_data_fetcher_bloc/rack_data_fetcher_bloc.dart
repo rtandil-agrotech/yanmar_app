@@ -17,7 +17,6 @@ class RackDataFetcherBloc extends Bloc<RackDataFetcherEvent, RackDataFetcherStat
         final result = await _repo.getRackList(currentTime: currentTime);
         emit(RackDataFetcherDone(result));
       } catch (e) {
-        print(e);
         emit(RackDataFetcherFailed(e.toString()));
       }
     });

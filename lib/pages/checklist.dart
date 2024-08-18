@@ -198,7 +198,6 @@ class PartsPage extends StatelessWidget {
                     final now = DateTime.now();
 
                     if (data.endTime?.isBefore(now) ?? false) {
-                      print('fetch');
                       BlocProvider.of<RackDataFetcherBloc>(context).add(FetchRackData());
                     }
 
