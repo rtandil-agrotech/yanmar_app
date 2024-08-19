@@ -7,7 +7,12 @@ import 'package:yanmar_app/bloc/rack_data_fetcher_bloc/rack_data_fetcher_bloc.da
 import 'package:yanmar_app/models/rack_model.dart';
 
 class ChecklistPage extends StatefulWidget {
-  const ChecklistPage({super.key});
+  const ChecklistPage({
+    super.key,
+    required this.initialPage,
+  });
+
+  final int initialPage;
 
   static const route = '/checklist';
 
@@ -24,7 +29,8 @@ class _ChecklistPageState extends State<ChecklistPage> {
   @override
   void initState() {
     _rackBloc.add(FetchRackData());
-    _pageController = PageController();
+    _currentIndex = widget.initialPage - 1;
+    _pageController = PageController(initialPage: _currentIndex);
     super.initState();
   }
 
