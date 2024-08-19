@@ -104,18 +104,25 @@ class SupabaseRepository {
 
     final List<RackModel> rackModel = [];
 
-    // Show schedule 1h from now
-    final time = currentTime.add(const Duration(hours: 1));
+    // Start of the day
+    final DateTime startOfDay = DateTime(currentTime.year, currentTime.month, currentTime.day, 0, 0, 0);
+
+    // End of the day
+    final DateTime endOfDay = DateTime(currentTime.year, currentTime.month, currentTime.day, 23, 59, 59, 999);
 
     for (int i = 0; i < result.length; i++) {
       final opAssIdList = (result[i]['master_op_assembly'] as List).map((e) => e['id']).toList();
 
+      // Get header where:
+      // - 1st header where end_time is greater than now
+      // - start_time and end_time between startOfDay and endOfDay
       final planHeader = await _client
           .from('production_plan_header')
           .select(
               'id, start_time, end_time, production_plan_detail(id, master_production_type_header(id, type_name, master_production_type_detail(id, master_parts(id, op_assembly_id, part_code, part_name), part_qty)) ,production_qty, order)')
-          .gte('end_time', time.toUtc().toIso8601String())
-          .lte('start_time', time.toUtc().toIso8601String())
+          .gte('end_time', currentTime.toUtc().toIso8601String())
+          .gte('start_time', startOfDay.toUtc().toIso8601String())
+          .lte('end_time', endOfDay.toUtc().toIso8601String())
           .inFilter('production_plan_detail.master_production_type_header.master_production_type_detail.master_parts.op_assembly_id', opAssIdList)
           .isFilter('deleted_at', null)
           .order('order', ascending: true, referencedTable: 'production_plan_detail')
