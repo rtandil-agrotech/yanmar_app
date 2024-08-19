@@ -104,8 +104,8 @@ class SupabaseRepository {
 
     final List<RackModel> rackModel = [];
 
-    // Move time by 1 hour
-    final time = currentTime.subtract(const Duration(hours: 1));
+    // Show schedule 1h from now
+    final time = currentTime.add(const Duration(hours: 1));
 
     for (int i = 0; i < result.length; i++) {
       final opAssIdList = (result[i]['master_op_assembly'] as List).map((e) => e['id']).toList();
