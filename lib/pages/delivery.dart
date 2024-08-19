@@ -43,7 +43,7 @@ class DeliveryPage extends StatefulWidget {
   static const List<String> subAssemblyHeaderDB = [
     'SUB ASSY CRANKSHAFT',
     'SUB ASSY BALANCER',
-    'SUB ASSY STAY RADIATOR',
+    'SUB ASSY RADIATOR',
     'SUB ASSY CAMSHAFT',
     'SUB ASSY PISTON',
     'SUB ASSY CYL HEAD',
