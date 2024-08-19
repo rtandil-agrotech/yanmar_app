@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
@@ -103,9 +105,22 @@ class _ChecklistPageState extends State<ChecklistPage> {
                         itemCount: state.data.length,
                         controller: _pageController,
                         onPageChanged: (page) => _handlePageViewChanged(page, state.data),
-                        itemBuilder: (context, index) => PartsPage(
-                          data: state.data[index],
-                        ),
+                        itemBuilder: (context, index) {
+                          final Stream stream = Stream.periodic(const Duration(seconds: 1),
+                              (r) => state.data[index].endTime != null && DateTime.now().isAfter(state.data[index].endTime!));
+                          StreamSubscription? subscription;
+                          subscription = stream.listen((event) {
+                            if (event) {
+                              subscription!.cancel();
+                              // ignore: use_build_context_synchronously
+                              BlocProvider.of<RackDataFetcherBloc>(context).add(FetchRackData());
+                            }
+                          });
+
+                          return PartsPage(
+                            data: state.data[index],
+                          );
+                        },
                       ),
                     ),
                     PageIndicator(
@@ -201,16 +216,12 @@ class PartsPage extends StatelessWidget {
                 StreamBuilder(
                   stream: Stream.periodic(const Duration(seconds: 1)),
                   builder: ((context, snapshot) {
-                    final now = DateTime.now();
-
-                    if (data.endTime?.isBefore(now) ?? false) {
-                      BlocProvider.of<RackDataFetcherBloc>(context).add(FetchRackData());
-                    }
+                    var now = DateTime.now();
 
                     return Align(
                       alignment: Alignment.centerRight,
                       child: Text(
-                        'TIME REMAINING: ${data.startTime != null ? _printDuration(data.startTime!.add(const Duration(minutes: 60)).difference(now)) : 'N/A'}',
+                        'TIME REMAINING: ${data.startTime != null ? _printDuration(data.endTime!.difference(now)) : 'N/A'}',
                         style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 20, color: Colors.amber),
                       ),
                     );

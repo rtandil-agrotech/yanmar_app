@@ -10,14 +10,6 @@ part 'delivery_data_fetcher_state.dart';
 
 class DeliveryDataFetcherBloc extends Bloc<DeliveryDataFetcherEvent, DeliveryDataFetcherState> {
   DeliveryDataFetcherBloc() : super(DeliveryDataFetcherInitial()) {
-    DateTime now = DateTime.now();
-
-    // Start of the day
-    final DateTime startOfDay = DateTime(now.year, now.month, now.day, 0, 0, 0);
-
-    // End of the day
-    final DateTime endOfDay = DateTime(now.year, now.month, now.day, 23, 59, 59, 999);
-
     subs1 = _repo.subscribeToItemRequestChanges((payload) {
       add(FetchDeliveryData());
     });
@@ -25,6 +17,14 @@ class DeliveryDataFetcherBloc extends Bloc<DeliveryDataFetcherEvent, DeliveryDat
     subs2 = _repo.subscribeToChecklistChanges(((p0) => add(FetchDeliveryData())));
 
     on<FetchDeliveryData>((event, emit) async {
+      DateTime now = DateTime.now();
+
+      // Start of the day
+      final DateTime startOfDay = DateTime(now.year, now.month, now.day, 0, 0, 0);
+
+      // End of the day
+      final DateTime endOfDay = DateTime(now.year, now.month, now.day, 23, 59, 59, 999);
+
       emit(DeliveryDataFetcherLoading());
       try {
         final result = await _repo.getDelivery(startTime: startOfDay, endTime: endOfDay);

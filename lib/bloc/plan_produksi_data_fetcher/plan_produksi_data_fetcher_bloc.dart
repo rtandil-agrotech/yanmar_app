@@ -10,19 +10,19 @@ part 'plan_produksi_data_fetcher_state.dart';
 
 class PlanProduksiDataFetcherBloc extends Bloc<PlanProduksiDataFetcherEvent, PlanProduksiDataFetcherState> {
   PlanProduksiDataFetcherBloc() : super(PlanProduksiDataFetcherInitial()) {
-    DateTime now = DateTime.now();
-
-    // Start of the day
-    final DateTime startOfDay = DateTime(now.year, now.month, now.day, 0, 0, 0);
-
-    // End of the day
-    final DateTime endOfDay = DateTime(now.year, now.month, now.day, 23, 59, 59, 999);
-
     subs = _repo.subscribeToProductionActualChanges((payload) {
       add(const FetchPlanProduksiData());
     });
 
     on<FetchPlanProduksiData>((event, emit) async {
+      DateTime now = DateTime.now();
+
+      // Start of the day
+      final DateTime startOfDay = DateTime(now.year, now.month, now.day, 0, 0, 0);
+
+      // End of the day
+      final DateTime endOfDay = DateTime(now.year, now.month, now.day, 23, 59, 59, 999);
+
       emit(PlanProduksiDataFetcherLoading());
       try {
         final result = await _repo.getPlanProduksi(startTime: startOfDay, endTime: endOfDay);
