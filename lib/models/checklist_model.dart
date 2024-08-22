@@ -107,8 +107,9 @@ class ChecklistParts extends Equatable {
   final int opAssemblyId;
   final String partCode;
   final String partName;
+  final String locator;
 
-  const ChecklistParts({required this.id, required this.opAssemblyId, required this.partCode, required this.partName});
+  const ChecklistParts({required this.id, required this.opAssemblyId, required this.partCode, required this.partName, required this.locator});
 
   factory ChecklistParts.fromSupabase(Map<String, dynamic> map) {
     return ChecklistParts(
@@ -116,6 +117,7 @@ class ChecklistParts extends Equatable {
       opAssemblyId: map['op_assembly_id'],
       partCode: map['part_code'],
       partName: map['part_name'],
+      locator: map['locator'],
     );
   }
 
@@ -125,5 +127,6 @@ class ChecklistParts extends Equatable {
         opAssemblyId,
         partCode,
         partName,
+        locator,
       ];
 }
