@@ -45,31 +45,56 @@ class _ChecklistPageState extends State<ChecklistPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        leading: Center(
-            child: Text(
-          DateFormat('EEEE, d MMMM yyyy').format(DateTime.now()),
-          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 20, color: Colors.amber),
-        )),
-        leadingWidth: 300,
-        actions: [
-          Padding(
-            padding: const EdgeInsets.only(right: 20.0),
-            child: StreamBuilder(
-              stream: Stream.periodic(const Duration(seconds: 1)),
-              builder: ((context, snapshot) => Align(
-                    alignment: Alignment.center,
-                    child: Text(DateFormat('HH:mm:ss').format(DateTime.now()),
-                        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 20, color: Colors.amber)),
-                  )),
-            ),
+    return BlocProvider(
+      create: (context) => _rackBloc,
+      child: Scaffold(
+        appBar: AppBar(
+          leading: Center(
+              child: Text(
+            DateFormat('EEEE, d MMMM yyyy').format(DateTime.now()),
+            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 20, color: Colors.amber),
+          )),
+          leadingWidth: 300,
+          title: BlocBuilder<RackDataFetcherBloc, RackDataFetcherState>(
+            builder: (context, state) {
+              if (state is RackDataFetcherDone) {
+                return Text(
+                  'Rak ${state.data[_currentIndex].rackName}',
+                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 24),
+                );
+              }
+              return Container();
+            },
           ),
-        ],
-      ),
-      body: BlocProvider(
-        create: (context) => _rackBloc,
-        child: BlocBuilder<RackDataFetcherBloc, RackDataFetcherState>(
+          centerTitle: true,
+          actions: [
+            BlocBuilder<RackDataFetcherBloc, RackDataFetcherState>(
+              builder: (context, state) {
+                if (state is RackDataFetcherDone) {
+                  return Padding(
+                    padding: const EdgeInsets.only(right: 20.0),
+                    child: StreamBuilder(
+                      stream: Stream.periodic(const Duration(seconds: 1)),
+                      builder: ((context, snapshot) {
+                        var now = DateTime.now();
+
+                        return Align(
+                          alignment: Alignment.centerRight,
+                          child: Text(
+                            'TIME REMAINING: ${state.data[_currentIndex].startTime != null ? _printDuration(state.data[_currentIndex].endTime!.difference(now)) : 'N/A'}',
+                            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 20, color: Colors.amber),
+                          ),
+                        );
+                      }),
+                    ),
+                  );
+                }
+                return Container();
+              },
+            ),
+          ],
+        ),
+        body: BlocBuilder<RackDataFetcherBloc, RackDataFetcherState>(
           builder: (context, state) {
             if (state is RackDataFetcherLoading) {
               return const Center(
@@ -123,11 +148,14 @@ class _ChecklistPageState extends State<ChecklistPage> {
                         },
                       ),
                     ),
-                    PageIndicator(
-                      currentPageIndex: _currentIndex,
-                      maxLength: state.data.length,
-                      onUpdateCurrentPageIndex: _updateCurrentPageIndex,
-                      isOnDesktopAndWeb: _isOnDesktopAndWeb,
+                    Visibility(
+                      visible: false,
+                      child: PageIndicator(
+                        currentPageIndex: _currentIndex,
+                        maxLength: state.data.length,
+                        onUpdateCurrentPageIndex: _updateCurrentPageIndex,
+                        isOnDesktopAndWeb: _isOnDesktopAndWeb,
+                      ),
                     )
                   ],
                 );
@@ -177,6 +205,14 @@ class _ChecklistPageState extends State<ChecklistPage> {
       curve: Curves.easeInOut,
     );
   }
+
+  String _printDuration(Duration duration) {
+    String negativeSign = duration.isNegative ? '-' : '';
+    String twoDigits(int n) => n.toString().padLeft(2, "0");
+    String twoDigitMinutes = twoDigits(duration.inMinutes.remainder(60).abs());
+    String twoDigitSeconds = twoDigits(duration.inSeconds.remainder(60).abs());
+    return "$negativeSign${twoDigits(duration.inHours)}:$twoDigitMinutes:$twoDigitSeconds";
+  }
 }
 
 class CustomScrollBehavior extends MaterialScrollBehavior {
@@ -189,7 +225,7 @@ class CustomScrollBehavior extends MaterialScrollBehavior {
       };
 }
 
-class PartsPage extends StatelessWidget {
+class PartsPage extends StatefulWidget {
   const PartsPage({
     super.key,
     required this.data,
@@ -198,52 +234,72 @@ class PartsPage extends StatelessWidget {
   final RackModel data;
 
   @override
+  State<PartsPage> createState() => _PartsPageState();
+}
+
+class _PartsPageState extends State<PartsPage> with TickerProviderStateMixin {
+  late ScrollController _scrollControllerTop;
+  late ScrollController _scrollControllerBottom;
+  late AnimationController _animationControllerTop;
+  late AnimationController _animationControllerBottom;
+  bool _scrollingForwardTop = true;
+  bool _scrollingForwardBottom = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _scrollControllerTop = ScrollController();
+    _scrollControllerBottom = ScrollController();
+    _animationControllerTop = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 40),
+    );
+    _animationControllerBottom = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 40),
+    );
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (_scrollControllerTop.position.maxScrollExtent > _scrollControllerTop.position.viewportDimension) {
+        _animationControllerTop.addListener(_scrollListenerTop);
+      }
+
+      if (_scrollControllerBottom.position.maxScrollExtent > _scrollControllerBottom.position.viewportDimension) {
+        _animationControllerBottom.addListener(_scrollListenerBottom);
+      }
+
+      _startScrolling();
+    });
+  }
+
+  @override
+  void dispose() {
+    _scrollControllerTop.dispose();
+    _scrollControllerBottom.dispose();
+    _animationControllerTop.dispose();
+    _animationControllerBottom.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.only(left: 20.0, right: 20.0),
       child: Column(
         children: [
-          Padding(
-            padding: const EdgeInsets.only(top: 10.0, bottom: 5.0),
-            child: Stack(
-              children: [
-                Center(
-                  child: Text(
-                    'Rak ${data.rackName}',
-                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 24),
-                  ),
-                ),
-                StreamBuilder(
-                  stream: Stream.periodic(const Duration(seconds: 1)),
-                  builder: ((context, snapshot) {
-                    var now = DateTime.now();
-
-                    return Align(
-                      alignment: Alignment.centerRight,
-                      child: Text(
-                        'TIME REMAINING: ${data.startTime != null ? _printDuration(data.endTime!.difference(now)) : 'N/A'}',
-                        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 20, color: Colors.amber),
-                      ),
-                    );
-                  }),
-                ),
-              ],
-            ),
-          ),
-          const Divider(
-            color: Colors.white,
-          ),
+          const Divider(color: Colors.white),
           Expanded(
             child: Row(
               children: [
-                Expanded(
+                SizedBox(
+                  width: 100,
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       ...() {
                         List<Widget> widgets = [];
 
-                        if (data.startTime == null) {
+                        if (widget.data.startTime == null) {
                           return [
                             const Icon(
                               Icons.warning,
@@ -259,11 +315,11 @@ class PartsPage extends StatelessWidget {
                           ];
                         }
 
-                        for (var detail in data.details) {
+                        for (var detail in widget.data.details) {
                           widgets.addAll([
                             Text(
                               detail.masterProductionType.typeName,
-                              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
+                              style: const TextStyle(color: Colors.amber, fontWeight: FontWeight.bold, fontSize: 20),
                             ),
                             Text(
                               '${detail.productionQty} Unit',
@@ -279,10 +335,9 @@ class PartsPage extends StatelessWidget {
                   ),
                 ),
                 Expanded(
-                  flex: 5,
                   child: Row(
                     children: List.generate(
-                      data.opAssemblyModel.length,
+                      widget.data.opAssemblyModel.length,
                       (index) => Expanded(
                         child: Container(
                           decoration: BoxDecoration(border: Border.all(color: Colors.white)),
@@ -290,81 +345,84 @@ class PartsPage extends StatelessWidget {
                             children: [
                               const SizedBox(height: 10),
                               Text(
-                                data.opAssemblyModel[index].name,
+                                widget.data.opAssemblyModel[index].name,
                                 style: const TextStyle(fontSize: 20, color: Colors.amber),
                               ),
                               Text(
-                                data.opAssemblyModel[index].rackPlacement,
+                                widget.data.opAssemblyModel[index].rackPlacement,
                                 style: const TextStyle(fontSize: 20),
                               ),
                               const SizedBox(height: 20),
                               Flexible(
-                                child: GridView.builder(
-                                  itemCount: data.details
+                                child: ListView.separated(
+                                  controller: index == 0 ? _scrollControllerTop : _scrollControllerBottom,
+                                  separatorBuilder: (context, index) => const Divider(),
+                                  itemCount: widget.data.details
                                       .expand((element) => element.masterProductionType.details)
-                                      .where((e) => e.parts.opAssemblyId == data.opAssemblyModel[index].id)
+                                      .where((e) => e.parts.opAssemblyId == widget.data.opAssemblyModel[index].id)
                                       .map((e) => e.parts)
                                       .length,
-                                  gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(maxCrossAxisExtent: 500, mainAxisExtent: 70),
                                   itemBuilder: (context, i) => Padding(
-                                    padding: const EdgeInsets.only(left: 8.0),
+                                    padding: const EdgeInsets.only(left: 8.0, right: 10),
                                     child: Row(
                                       children: [
-                                        Container(
-                                          alignment: Alignment.topLeft,
-                                          width: 200,
+                                        Expanded(
                                           child: Column(
                                             mainAxisSize: MainAxisSize.min,
                                             crossAxisAlignment: CrossAxisAlignment.start,
                                             children: [
                                               Text(
-                                                data.details
+                                                widget.data.details
                                                     .expand((element) => element.masterProductionType.details)
-                                                    .where((e) => e.parts.opAssemblyId == data.opAssemblyModel[index].id)
+                                                    .where((e) => e.parts.opAssemblyId == widget.data.opAssemblyModel[index].id)
                                                     .map((e) => e.parts)
                                                     .toList()[i]
                                                     .partName,
                                                 softWrap: true,
-                                                style: const TextStyle(color: Colors.amber),
+                                                style: const TextStyle(color: Colors.amber, fontSize: 16),
                                               ),
                                               Text(
-                                                data.details
+                                                widget.data.details
                                                     .expand((element) => element.masterProductionType.details)
-                                                    .where((e) => e.parts.opAssemblyId == data.opAssemblyModel[index].id)
+                                                    .where((e) => e.parts.opAssemblyId == widget.data.opAssemblyModel[index].id)
                                                     .map((e) => e.parts)
                                                     .toList()[i]
                                                     .partCode,
                                                 softWrap: true,
+                                                style: const TextStyle(fontSize: 16),
+                                              ),
+                                              Text(
+                                                widget.data.details
+                                                    .expand((element) => element.masterProductionType.details)
+                                                    .where((e) => e.parts.opAssemblyId == widget.data.opAssemblyModel[index].id)
+                                                    .map((e) => e.parts)
+                                                    .toList()[i]
+                                                    .locator,
+                                                softWrap: true,
+                                                style: const TextStyle(fontSize: 16),
                                               ),
                                             ],
                                           ),
                                         ),
-                                        const SizedBox(
-                                          width: 10,
-                                        ),
-                                        Flexible(
-                                          child: Align(
-                                            alignment: Alignment.topLeft,
-                                            child: Text(
-                                              () {
-                                                final partId = data.details
-                                                    .expand((element) => element.masterProductionType.details)
-                                                    .where((e) => e.parts.opAssemblyId == data.opAssemblyModel[index].id)
-                                                    .toList()[i]
-                                                    .id;
-                                                final partQty = data.details
-                                                    .expand((element) => element.masterProductionType.details)
-                                                    .where((e) => e.parts.opAssemblyId == data.opAssemblyModel[index].id)
-                                                    .toList()[i]
-                                                    .qty;
-                                                final prodQty = data.details
-                                                    .firstWhere((element) => element.masterProductionType.details.map((e) => e.id).contains(partId))
-                                                    .productionQty;
-                                                return '${partQty * prodQty}';
-                                              }(),
-                                              softWrap: true,
-                                            ),
-                                          ),
+                                        Text(
+                                          () {
+                                            final partId = widget.data.details
+                                                .expand((element) => element.masterProductionType.details)
+                                                .where((e) => e.parts.opAssemblyId == widget.data.opAssemblyModel[index].id)
+                                                .toList()[i]
+                                                .id;
+                                            final partQty = widget.data.details
+                                                .expand((element) => element.masterProductionType.details)
+                                                .where((e) => e.parts.opAssemblyId == widget.data.opAssemblyModel[index].id)
+                                                .toList()[i]
+                                                .qty;
+                                            final prodQty = widget.data.details
+                                                .firstWhere((element) => element.masterProductionType.details.map((e) => e.id).contains(partId))
+                                                .productionQty;
+                                            return '${partQty * prodQty}';
+                                          }(),
+                                          softWrap: true,
+                                          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                                         ),
                                       ],
                                     ),
@@ -377,42 +435,6 @@ class PartsPage extends StatelessWidget {
                       ),
                     ),
                   ),
-                  // child: Container(
-                  //   decoration: BoxDecoration(border: Border.all(color: Colors.white)),
-                  //   padding: const EdgeInsets.only(left: 30.0, right: 30.0),
-                  //   child: GridView.builder(
-                  //     itemCount: data.details.expand((element) => element.masterProductionType.details).map((e) => e.parts).length,
-                  //     gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(maxCrossAxisExtent: 500, mainAxisExtent: 70),
-                  //     itemBuilder: (context, index) => Row(
-                  //       children: [
-                  //         SizedBox(
-                  //           width: 200,
-                  //           child: Text(
-                  //             data!.details.expand((element) => element.masterProductionType.details).map((e) => e.parts).toList()[index].partName,
-                  //             softWrap: true,
-                  //             style: const TextStyle(color: Colors.amber),
-                  //           ),
-                  //         ),
-                  //         const SizedBox(
-                  //           width: 10,
-                  //         ),
-                  //         Flexible(
-                  //           child: Text(
-                  //             () {
-                  //               final partId = data.details.expand((element) => element.masterProductionType.details).toList()[index].id;
-                  //               final partQty = data.details.expand((element) => element.masterProductionType.details).toList()[index].qty;
-                  //               final prodQty = data.details
-                  //                   .firstWhere((element) => element.masterProductionType.details.map((e) => e.id).contains(partId))
-                  //                   .productionQty;
-                  //               return '${partQty * prodQty}';
-                  //             }(),
-                  //             softWrap: true,
-                  //           ),
-                  //         ),
-                  //       ],
-                  //     ),
-                  //   ),
-                  // ),
                 ),
               ],
             ),
@@ -422,160 +444,73 @@ class PartsPage extends StatelessWidget {
     );
   }
 
-  String _printDuration(Duration duration) {
-    String negativeSign = duration.isNegative ? '-' : '';
-    String twoDigits(int n) => n.toString().padLeft(2, "0");
-    String twoDigitMinutes = twoDigits(duration.inMinutes.remainder(60).abs());
-    String twoDigitSeconds = twoDigits(duration.inSeconds.remainder(60).abs());
-    return "$negativeSign${twoDigits(duration.inHours)}:$twoDigitMinutes:$twoDigitSeconds";
+  void _startScrolling() {
+    _animationControllerTop.repeat();
+    _animationControllerBottom.repeat();
+  }
+
+  void _scrollListenerTop() {
+    if (_scrollControllerTop.hasClients) {
+      double maxScrollExtent = _scrollControllerTop.position.maxScrollExtent;
+      double pixels = _scrollControllerTop.position.pixels;
+
+      if (_scrollingForwardTop) {
+        _scrollControllerTop.jumpTo(pixels + 1);
+        if (_scrollControllerTop.position.pixels >= maxScrollExtent) {
+          _animationControllerTop.stop();
+          Timer(const Duration(seconds: 5), () {
+            setState(() {
+              _scrollingForwardTop = !_scrollingForwardTop;
+              _animationControllerTop.forward(from: 0);
+            });
+          });
+        }
+      } else {
+        _scrollControllerTop.jumpTo(pixels - 1);
+        if (_scrollControllerTop.position.pixels <= 0) {
+          _animationControllerTop.stop();
+          Timer(const Duration(seconds: 5), () {
+            setState(() {
+              _scrollingForwardTop = !_scrollingForwardTop;
+              _animationControllerTop.forward(from: 0);
+            });
+          });
+        }
+      }
+    }
+  }
+
+  void _scrollListenerBottom() {
+    if (_scrollControllerBottom.hasClients) {
+      double maxScrollExtent = _scrollControllerBottom.position.maxScrollExtent;
+      double pixels = _scrollControllerBottom.position.pixels;
+
+      if (_scrollingForwardBottom) {
+        _scrollControllerBottom.jumpTo(pixels + 1);
+        if (_scrollControllerBottom.position.pixels >= maxScrollExtent) {
+          _animationControllerBottom.stop();
+          Timer(const Duration(seconds: 5), () {
+            setState(() {
+              _scrollingForwardBottom = !_scrollingForwardBottom;
+              _animationControllerBottom.forward(from: 0);
+            });
+          });
+        }
+      } else {
+        _scrollControllerBottom.jumpTo(pixels - 1);
+        if (_scrollControllerBottom.position.pixels <= 0) {
+          _animationControllerBottom.stop();
+          Timer(const Duration(seconds: 5), () {
+            setState(() {
+              _scrollingForwardBottom = !_scrollingForwardBottom;
+              _animationControllerBottom.forward(from: 0);
+            });
+          });
+        }
+      }
+    }
   }
 }
-
-// class PartsPage extends StatelessWidget {
-//   const PartsPage({
-//     super.key,
-//     required this.rackName,
-//   });
-
-//   final String rackName;
-
-//   @override
-//   Widget build(BuildContext context) {
-//     return BlocBuilder<PartsDataFetcherBloc, PartsDataFetcherState>(
-//       builder: (context, state) {
-//         if (state is PartsDataFetcherLoading) {
-//           return const Center(
-//             child: SizedBox(width: 50, height: 50, child: CircularProgressIndicator()),
-//           );
-//         } else if (state is PartsDataFetcherDone) {
-//           if (state.data == null) {
-//             return const Center(
-//               child: Text('No data'),
-//             );
-//           } else {
-//             return Padding(
-//               padding: const EdgeInsets.only(left: 20.0, right: 20.0),
-//               child: Column(
-//                 children: [
-//                   StreamBuilder(
-//                     stream: Stream.periodic(const Duration(seconds: 1)),
-//                     builder: ((context, snapshot) => Align(
-//                           alignment: Alignment.centerRight,
-//                           child: Text(
-//                             'TIME REMAINING: ${_printDuration(state.data!.startTime.add(const Duration(minutes: 60)).difference(DateTime.now()))}',
-//                             style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 20, color: Colors.amber),
-//                           ),
-//                         )),
-//                   ),
-//                   Padding(
-//                     padding: const EdgeInsets.only(top: 10.0, bottom: 5.0),
-//                     child: Text(
-//                       rackName,
-//                       style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
-//                     ),
-//                   ),
-//                   const Divider(
-//                     color: Colors.white,
-//                   ),
-//                   Expanded(
-//                     child: Row(
-//                       children: [
-//                         Expanded(
-//                           child: Column(
-//                             crossAxisAlignment: CrossAxisAlignment.start,
-//                             children: [
-//                               ...() {
-//                                 List<Widget> widgets = [];
-
-//                                 for (var detail in state.data!.details) {
-//                                   widgets.addAll([
-//                                     Text(
-//                                       detail.masterProductionType.typeName,
-//                                       style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
-//                                     ),
-//                                     Text(
-//                                       '${detail.productionQty} Unit',
-//                                       style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
-//                                     ),
-//                                     const SizedBox(height: 20),
-//                                   ]);
-//                                 }
-
-//                                 return widgets;
-//                               }(),
-//                             ],
-//                           ),
-//                         ),
-//                         Expanded(
-//                           flex: 5,
-//                           child: Container(
-//                             decoration: BoxDecoration(border: Border.all(color: Colors.white)),
-//                             padding: const EdgeInsets.only(left: 30.0, right: 30.0),
-//                             child: GridView.builder(
-//                               itemCount: state.data!.details.expand((element) => element.masterProductionType.details).map((e) => e.parts).length,
-//                               gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(maxCrossAxisExtent: 500, mainAxisExtent: 70),
-//                               itemBuilder: (context, index) => Row(
-//                                 children: [
-//                                   SizedBox(
-//                                     width: 200,
-//                                     child: Text(
-//                                       state.data!.details
-//                                           .expand((element) => element.masterProductionType.details)
-//                                           .map((e) => e.parts)
-//                                           .toList()[index]
-//                                           .partName,
-//                                       softWrap: true,
-//                                       style: const TextStyle(color: Colors.amber),
-//                                     ),
-//                                   ),
-//                                   const SizedBox(
-//                                     width: 10,
-//                                   ),
-//                                   Flexible(
-//                                     child: Text(
-//                                       () {
-//                                         final partId =
-//                                             state.data!.details.expand((element) => element.masterProductionType.details).toList()[index].id;
-//                                         final partQty =
-//                                             state.data!.details.expand((element) => element.masterProductionType.details).toList()[index].qty;
-//                                         final prodQty = state.data!.details
-//                                             .firstWhere((element) => element.masterProductionType.details.map((e) => e.id).contains(partId))
-//                                             .productionQty;
-//                                         return '${partQty * prodQty}';
-//                                       }(),
-//                                       softWrap: true,
-//                                     ),
-//                                   ),
-//                                 ],
-//                               ),
-//                             ),
-//                           ),
-//                         ),
-//                       ],
-//                     ),
-//                   ),
-//                 ],
-//               ),
-//             );
-//           }
-//         } else if (state is PartsDataFetcherFailed) {
-//           return Center(
-//             child: Text('Failed to fetch data. ${state.message}'),
-//           );
-//         }
-//         return Container();
-//       },
-//     );
-//   }
-
-//   String _printDuration(Duration duration) {
-//     String negativeSign = duration.isNegative ? '-' : '';
-//     String twoDigits(int n) => n.toString().padLeft(2, "0");
-//     String twoDigitMinutes = twoDigits(duration.inMinutes.remainder(60).abs());
-//     String twoDigitSeconds = twoDigits(duration.inSeconds.remainder(60).abs());
-//     return "$negativeSign${twoDigits(duration.inHours)}:$twoDigitMinutes:$twoDigitSeconds";
-//   }
-// }
 
 /// Page indicator for desktop and web platforms.
 ///
