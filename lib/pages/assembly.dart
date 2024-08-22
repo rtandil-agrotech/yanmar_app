@@ -675,24 +675,7 @@ int findMaxQtyInDetails(List<PlanProduksiModel> list) {
           });
     });
 
-    int movingActuals = 0;
-
-    for (var detail in scannedRow.details) {
-      final int movingTotal = list.fold(0, (total, listB) {
-        return total +
-            listB.details.where((element) => element.id == detail.id).fold(0, (innerTotal, listA) {
-              return innerTotal +
-                  listA.actuals
-                      .where((element) => !(element.recordedTime.isAfter(scannedRow.startTime) && element.recordedTime.isBefore(scannedRow.endTime)))
-                      .toList()
-                      .length;
-            });
-      });
-
-      movingActuals += movingTotal;
-    }
-
-    final rowMaxQty = max(totalActuals, qty - movingActuals);
+    final rowMaxQty = max(totalActuals, qty);
 
     // update max qty value
     if (rowMaxQty > maxQty) {
@@ -781,6 +764,8 @@ List<DataRow> generateTable({required List<PlanProduksiModel> list, required int
           if (accumulatedQty > generatedCell) {
             // Generate Plan based on qty of current detail
             for (int i = generatedCell; i < accumulatedQty; i++) {
+              if (countActualsInRow + planGenerated >= maxQtyInRow) break outerloop;
+
               widgets.add(
                 Container(
                   margin: const EdgeInsets.all(5.0),
@@ -797,8 +782,6 @@ List<DataRow> generateTable({required List<PlanProduksiModel> list, required int
               planGenerated++;
 
               generatedCell++;
-
-              if (countActualsInRow + planGenerated == maxQtyInRow) break outerloop;
             }
           }
         }
