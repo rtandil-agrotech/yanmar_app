@@ -329,7 +329,7 @@ class GraphWidgetAlter extends StatelessWidget {
                       lineHeight: 20,
                       barRadius: const Radius.circular(10),
                       // trailing: Text('${data.map((e) => e.actuals.length / e.qty * 100).toList().elementAt(index).toStringAsFixed(0)} %'),
-                      percent: data.map((e) => e.actuals.length / e.qty).toList().elementAt(index),
+                      percent: data.map((e) => min((e.actuals.length / e.qty), 1).toDouble()).toList().elementAt(index),
                       backgroundColor: Colors.grey,
                       progressColor: Colors.green,
                     ),
