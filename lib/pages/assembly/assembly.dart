@@ -124,7 +124,7 @@ class _AssemblyPageState extends State<AssemblyPage> {
             ),
             const Flexible(
                 child: Padding(
-              padding: EdgeInsets.only(bottom: 20.0),
+              padding: EdgeInsets.only(top: 20, bottom: 20.0),
               child: GraphWidgetAlter(),
             ))
           ],
@@ -138,6 +138,8 @@ class _AssemblyPageState extends State<AssemblyPage> {
     required List<PlanProduksiModel> list,
   }) {
     int generatedCell = 0;
+
+    int totalActuals = list.fold(0, (total, row) => total + row.details.fold(0, (total, detail) => total + detail.actuals.length));
 
     List<PlanProduksiDetailModel> late = [];
 
@@ -163,11 +165,7 @@ class _AssemblyPageState extends State<AssemblyPage> {
         }
       }
 
-      if (!list
-          .firstWhere((e) => e.startTime.isAtSameMomentAs(startTime))
-          .details
-          .expand((f) => f.actuals)
-          .any((g) => g.recordedTime.isAfter(endTime))) {
+      if (generatedCell >= totalActuals) {
         final int maxQtyInRow = list.firstWhere((e) => e.startTime.isAtSameMomentAs(startTime)).details.fold(0, (total, f) => total + f.qty);
         int accumulatedQty = 0;
         int planGenerated = 0;
@@ -217,6 +215,8 @@ class _AssemblyPageState extends State<AssemblyPage> {
   }) {
     int generatedCell = 0;
 
+    int totalActuals = list.fold(0, (total, row) => total + row.details.fold(0, (total, detail) => total + detail.actuals.length));
+
     List<PlanProduksiDetailModel> late = [];
 
     for (var rows in list) {
@@ -241,11 +241,7 @@ class _AssemblyPageState extends State<AssemblyPage> {
         }
       }
 
-      if (!list
-          .firstWhere((e) => e.startTime.isAtSameMomentAs(startTime))
-          .details
-          .expand((f) => f.actuals)
-          .any((g) => g.recordedTime.isAfter(endTime))) {
+      if (generatedCell >= totalActuals) {
         final int maxQtyInRow = list.firstWhere((e) => e.startTime.isAtSameMomentAs(startTime)).details.fold(0, (total, f) => total + f.qty);
         int accumulatedQty = 0;
         int planGenerated = 0;
@@ -304,7 +300,7 @@ class GraphWidgetAlter extends StatelessWidget {
             child: CircularProgressIndicator(),
           );
         } else if (state is MonthlyPlanProduksiDataFetcherDone) {
-          final data = state.result.expand((e) => e.details).toList().where((f) => f.actuals.length / f.qty * 100 >= 1);
+          final data = state.result.expand((e) => e.details).toList();
 
           return Wrap(
             runSpacing: 30,
@@ -481,7 +477,8 @@ class SummaryBottom extends StatelessWidget {
                     ],
                   ),
                 ),
-                Flexible(
+                SizedBox(
+                  width: 220,
                   child: Align(
                     alignment: Alignment.topRight,
                     child: Table(
@@ -517,6 +514,8 @@ class SummaryBottom extends StatelessWidget {
   }) {
     int generatedCell = 0;
 
+    int totalActuals = list.fold(0, (total, row) => total + row.details.fold(0, (total, detail) => total + detail.actuals.length));
+
     List<PlanProduksiDetailModel> late = [];
 
     for (var rows in list) {
@@ -541,11 +540,7 @@ class SummaryBottom extends StatelessWidget {
         }
       }
 
-      if (!list
-          .firstWhere((e) => e.startTime.isAtSameMomentAs(startTime))
-          .details
-          .expand((f) => f.actuals)
-          .any((g) => g.recordedTime.isAfter(endTime))) {
+      if (generatedCell >= totalActuals) {
         final int maxQtyInRow = list.firstWhere((e) => e.startTime.isAtSameMomentAs(startTime)).details.fold(0, (total, f) => total + f.qty);
         int accumulatedQty = 0;
         int planGenerated = 0;
@@ -695,6 +690,8 @@ List<DataRow> generateTable({required List<PlanProduksiModel> list, required int
   // Added based on how many actuals and plans are generated in a row
   int generatedCell = 0;
 
+  int totalActuals = list.fold(0, (total, row) => total + row.details.fold(0, (total, detail) => total + detail.actuals.length));
+
   for (var row in list) {
     final DateTime startTime = row.startTime;
     final DateTime endTime = row.endTime;
@@ -747,11 +744,7 @@ List<DataRow> generateTable({required List<PlanProduksiModel> list, required int
       }
     }
 
-    if (!list
-        .firstWhere((e) => e.startTime.isAtSameMomentAs(startTime))
-        .details
-        .expand((f) => f.actuals)
-        .any((g) => g.recordedTime.isAfter(endTime))) {
+    if (generatedCell >= totalActuals) {
       final int maxQtyInRow = list.firstWhere((e) => e.startTime.isAtSameMomentAs(startTime)).details.fold(0, (total, f) => total + f.qty);
       int accumulatedQty = 0;
       int planGenerated = 0;

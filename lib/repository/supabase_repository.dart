@@ -54,11 +54,12 @@ class SupabaseRepository {
     final result = await _client
         .from('production_plan_header')
         .select(
-            'id, start_time, end_time, production_plan_detail(id, master_production_type_header(id, type_name, estimated_production_duration, master_fulfillment(id, op_assembly_id, estimated_duration)) ,production_qty, order), item_requests(id, master_op_assembly(id, assembly_name), start_time, end_time), checklist_header(id, is_help_pressed)')
+            'id, start_time, end_time, production_plan_detail(id, master_production_type_header(id, type_name, estimated_production_duration, master_fulfillment(id, op_assembly_id, estimated_duration)) ,production_qty, order), item_requests(id, master_op_assembly(id, assembly_name, rack_placement), start_time, end_time), checklist_header(id, is_help_pressed)')
         .gte('start_time', startTime.toUtc().toIso8601String())
         .lt('end_time', endTime.toUtc().toIso8601String())
         .isFilter('deleted_at', null)
-        .order('order', ascending: true, referencedTable: 'production_plan_detail');
+        .order('order', ascending: true, referencedTable: 'production_plan_detail')
+        .order('start_time', ascending: true);
 
     final List<DeliveryPlanModel> deliveryPlanModel = result.map((e) => DeliveryPlanModel.fromSupabase(e)).toList();
 
@@ -119,13 +120,14 @@ class SupabaseRepository {
       final planHeader = await _client
           .from('production_plan_header')
           .select(
-              'id, start_time, end_time, production_plan_detail(id, master_production_type_header(id, type_name, master_production_type_detail(id, master_parts(id, op_assembly_id, part_code, part_name), part_qty)) ,production_qty, order)')
+              'id, start_time, end_time, production_plan_detail(id, master_production_type_header(id, type_name, master_production_type_detail(id, master_parts(id, op_assembly_id, part_code, part_name, locator), part_qty)) ,production_qty, order)')
           .gte('end_time', currentTime.toUtc().toIso8601String())
           .gte('start_time', startOfDay.toUtc().toIso8601String())
           .lte('end_time', endOfDay.toUtc().toIso8601String())
           .inFilter('production_plan_detail.master_production_type_header.master_production_type_detail.master_parts.op_assembly_id', opAssIdList)
           .isFilter('deleted_at', null)
           .order('order', ascending: true, referencedTable: 'production_plan_detail')
+          .order('start_time', ascending: true)
           .limit(1);
 
       // Remove all parts where op assembly id is not opAssemblyId from planHeaderList
