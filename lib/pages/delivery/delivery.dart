@@ -3,60 +3,14 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
 import 'package:yanmar_app/bloc/delivery_data_fetcher_bloc/delivery_data_fetcher_bloc.dart';
 import 'package:yanmar_app/models/delivery_model.dart';
+import 'package:yanmar_app/pages/delivery/helpers/map_db_to_ui.dart';
+
+import 'constants/table_header_names.dart';
 
 class DeliveryPage extends StatefulWidget {
   const DeliveryPage({super.key});
 
   static const route = '/delivery';
-
-  static const List<String> opAssemblyHeader = [
-    'OP 1',
-    'OP 2',
-    'OP 3/1',
-    'OP 3/2',
-    'OP 4',
-    'OP 5/1',
-    'OP 5/2',
-    'OP 6',
-    'OP 7',
-    'OP 8',
-    'OP 9',
-    'OP 10',
-    'OP 11',
-  ];
-  static const List<String> subAssemblyHeader = [
-    'Crankshaft',
-    'Balancer/Support Governor',
-    'Radiator/Tens pulley',
-    'Camshaft',
-    'Piston',
-    'Cyl Head',
-    'Fuel Cock/Cap Fuel Tank',
-    'Gear Case',
-    'Rocker Arm',
-    'Bonnet/Stay Rad',
-    'Air Cleaner',
-    'Fi Pipe, Cover Top, Lamp, Fo',
-    ''
-  ];
-
-  static const List<String> subAssemblyHeaderDB = [
-    'SUB ASSY CRANKSHAFT',
-    'SUB ASSY BALANCER',
-    'SUB ASSY RADIATOR',
-    'SUB ASSY CAMSHAFT',
-    'SUB ASSY PISTON',
-    'SUB ASSY CYL HEAD',
-    'SUB ASSY CAP FO TANK',
-    'SUB ASSY GEARCASE',
-    'SUB ASSY ROCK ARM',
-    'SUB ASSY STAY RADIATOR',
-    'SUB ASSY AIR CLEANER',
-    'SUB ASSY FO TANK',
-    ''
-  ];
-
-  static final mapSubAssemblyHeaderToDb = Map.fromIterables(subAssemblyHeader, subAssemblyHeaderDB);
 
   @override
   State<DeliveryPage> createState() => _DeliveryPageState();
@@ -159,7 +113,7 @@ class DeliveryTable extends StatelessWidget {
 
   final DateFormat formatter = DateFormat('HH:mm');
 
-  static const headerHeight = 50.0;
+  static const headerHeight = 80.0;
   static const rowHeight = 50.0;
   static const columnWidth = 110.0;
 
@@ -183,7 +137,7 @@ class DeliveryTable extends StatelessWidget {
                     .map(
                       (e) => Container(
                         alignment: Alignment.center,
-                        height: 3 * headerHeight,
+                        height: 2.4 * headerHeight,
                         child: e,
                       ),
                     )
@@ -193,7 +147,15 @@ class DeliveryTable extends StatelessWidget {
                 data.length,
                 (index) => TableRow(
                   children: [
-                    Text('${formatter.format(data[index].startTime.toLocal())} - ${formatter.format(data[index].endTime.toLocal())}'),
+                    // Text('${formatter.format(data[index].startTime.toLocal())} - ${formatter.format(data[index].endTime.toLocal())}'),
+                    () {
+                      if (index == 0) {
+                        return const Text('06:30 - 07:30');
+                      } else {
+                        return Text(
+                            '${formatter.format(data[index - 1].startTime.toLocal())} - ${formatter.format(data[index - 1].endTime.toLocal())}');
+                      }
+                    }(),
                     Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: List.generate(data[index].details.length, (e) => Text(data[index].details[e].type.typeName))),
@@ -237,7 +199,7 @@ class DeliveryTable extends StatelessWidget {
                   .toList(),
             ),
             TableRow(
-              children: DeliveryPage.opAssemblyHeader
+              children: opAssemblyHeader
                   .map((e) => Text(
                         e,
                         textAlign: TextAlign.center,
@@ -252,7 +214,7 @@ class DeliveryTable extends StatelessWidget {
                   .toList(),
             ),
             TableRow(
-              children: DeliveryPage.subAssemblyHeader
+              children: subAssemblyHeader
                   .map((e) => Text(
                         e,
                         textAlign: TextAlign.center,
@@ -261,7 +223,7 @@ class DeliveryTable extends StatelessWidget {
                   .map(
                     (e) => Container(
                       alignment: Alignment.center,
-                      height: 1.8 * headerHeight,
+                      height: 1.2 * headerHeight,
                       child: e,
                     ),
                   )
@@ -274,9 +236,9 @@ class DeliveryTable extends StatelessWidget {
                 rows.add(
                   TableRow(
                     children: List.generate(
-                      DeliveryPage.opAssemblyHeader.length,
+                      opAssemblyHeader.length,
                       (index) => Container(
-                        color: showColor(data[i], DeliveryPage.opAssemblyHeader[index]),
+                        color: showColor(data[i], mapOpAssemblyHeaderToDb[opAssemblyHeader[index]]!),
                         alignment: Alignment.center,
                         height: rowHeight,
                       ),
@@ -286,9 +248,9 @@ class DeliveryTable extends StatelessWidget {
                 rows.add(
                   TableRow(
                     children: List.generate(
-                      DeliveryPage.subAssemblyHeader.length,
+                      subAssemblyHeader.length,
                       (index) => Container(
-                        color: showColor(data[i], DeliveryPage.mapSubAssemblyHeaderToDb[DeliveryPage.subAssemblyHeader[index]]!),
+                        color: showColor(data[i], mapSubAssemblyHeaderToDb[subAssemblyHeader[index]]!),
                         alignment: Alignment.center,
                         height: rowHeight,
                       ),
@@ -314,18 +276,21 @@ class DeliveryTable extends StatelessWidget {
             0,
             (total, listB) =>
                 total + (listB.type.fulfillment?.firstWhere((element) => element.opAssemblyId == opAssemblyId).estimatedDuration.inSeconds ?? 0));
+        if (itemRequestData.startTime != null) {
+          if (itemRequestData.endTime != null) {
+            final duration = itemRequestData.endTime!.difference(itemRequestData.startTime!).inSeconds;
 
-        if (itemRequestData.startTime != null && itemRequestData.endTime != null) {
-          final duration = itemRequestData.endTime!.difference(itemRequestData.startTime!).inSeconds;
-
-          if (duration < fulfilmentTime) {
-            return Colors.green;
-          } else if (duration > fulfilmentTime) {
-            if (data.isHelpPressed.contains(true)) {
-              return Colors.red;
-            } else {
-              return Colors.amber;
+            if (duration < fulfilmentTime) {
+              return Colors.green;
+            } else if (duration > fulfilmentTime) {
+              if (data.isHelpPressed.contains(true)) {
+                return Colors.red;
+              } else {
+                return Colors.amber;
+              }
             }
+          } else {
+            return Colors.yellow;
           }
         }
       } catch (e) {

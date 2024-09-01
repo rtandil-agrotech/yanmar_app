@@ -81,7 +81,7 @@ class _ChecklistPageState extends State<ChecklistPage> {
                         return Align(
                           alignment: Alignment.centerRight,
                           child: Text(
-                            'TIME REMAINING: ${state.data[_currentIndex].startTime != null ? _printDuration(state.data[_currentIndex].endTime!.difference(now)) : 'N/A'}',
+                            'TIME REMAINING: ${state.data[_currentIndex].startTime != null ? _printDuration(state.data[_currentIndex].startTime!.difference(now)) : 'N/A'}',
                             style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 20, color: Colors.amber),
                           ),
                         );
@@ -132,7 +132,7 @@ class _ChecklistPageState extends State<ChecklistPage> {
                         onPageChanged: (page) => _handlePageViewChanged(page, state.data),
                         itemBuilder: (context, index) {
                           final Stream stream = Stream.periodic(const Duration(seconds: 1),
-                              (r) => state.data[index].endTime != null && DateTime.now().isAfter(state.data[index].endTime!));
+                              (r) => state.data[index].startTime != null && DateTime.now().isAfter(state.data[index].startTime!));
                           StreamSubscription? subscription;
                           subscription = stream.listen((event) {
                             if (event) {
@@ -260,11 +260,11 @@ class _PartsPageState extends State<PartsPage> with TickerProviderStateMixin {
     );
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (_scrollControllerTop.position.maxScrollExtent > _scrollControllerTop.position.viewportDimension) {
+      if (_scrollControllerTop.position.maxScrollExtent > 0) {
         _animationControllerTop.addListener(_scrollListenerTop);
       }
 
-      if (_scrollControllerBottom.position.maxScrollExtent > _scrollControllerBottom.position.viewportDimension) {
+      if (_scrollControllerBottom.position.maxScrollExtent > 0) {
         _animationControllerBottom.addListener(_scrollListenerBottom);
       }
 
@@ -274,10 +274,12 @@ class _PartsPageState extends State<PartsPage> with TickerProviderStateMixin {
 
   @override
   void dispose() {
-    _scrollControllerTop.dispose();
+    _animationControllerBottom.removeListener(_scrollListenerBottom);
+    _animationControllerTop.removeListener(_scrollListenerTop);
     _scrollControllerBottom.dispose();
-    _animationControllerTop.dispose();
+    _scrollControllerTop.dispose();
     _animationControllerBottom.dispose();
+    _animationControllerTop.dispose();
     super.dispose();
   }
 
@@ -445,8 +447,12 @@ class _PartsPageState extends State<PartsPage> with TickerProviderStateMixin {
   }
 
   void _startScrolling() {
-    _animationControllerTop.repeat();
-    _animationControllerBottom.repeat();
+    Future.delayed(const Duration(seconds: 5), () {
+      if (mounted) {
+        _animationControllerTop.repeat();
+        _animationControllerBottom.repeat();
+      }
+    });
   }
 
   void _scrollListenerTop() {
@@ -458,22 +464,26 @@ class _PartsPageState extends State<PartsPage> with TickerProviderStateMixin {
         _scrollControllerTop.jumpTo(pixels + 1);
         if (_scrollControllerTop.position.pixels >= maxScrollExtent) {
           _animationControllerTop.stop();
-          Timer(const Duration(seconds: 5), () {
-            setState(() {
-              _scrollingForwardTop = !_scrollingForwardTop;
-              _animationControllerTop.forward(from: 0);
-            });
+          Future.delayed(const Duration(seconds: 5), () {
+            if (mounted) {
+              setState(() {
+                _scrollingForwardTop = !_scrollingForwardTop;
+                _animationControllerTop.forward(from: 0);
+              });
+            }
           });
         }
       } else {
         _scrollControllerTop.jumpTo(pixels - 1);
         if (_scrollControllerTop.position.pixels <= 0) {
           _animationControllerTop.stop();
-          Timer(const Duration(seconds: 5), () {
-            setState(() {
-              _scrollingForwardTop = !_scrollingForwardTop;
-              _animationControllerTop.forward(from: 0);
-            });
+          Future.delayed(const Duration(seconds: 5), () {
+            if (mounted) {
+              setState(() {
+                _scrollingForwardTop = !_scrollingForwardTop;
+                _animationControllerTop.forward(from: 0);
+              });
+            }
           });
         }
       }
@@ -489,22 +499,26 @@ class _PartsPageState extends State<PartsPage> with TickerProviderStateMixin {
         _scrollControllerBottom.jumpTo(pixels + 1);
         if (_scrollControllerBottom.position.pixels >= maxScrollExtent) {
           _animationControllerBottom.stop();
-          Timer(const Duration(seconds: 5), () {
-            setState(() {
-              _scrollingForwardBottom = !_scrollingForwardBottom;
-              _animationControllerBottom.forward(from: 0);
-            });
+          Future.delayed(const Duration(seconds: 5), () {
+            if (mounted) {
+              setState(() {
+                _scrollingForwardBottom = !_scrollingForwardBottom;
+                _animationControllerBottom.forward(from: 0);
+              });
+            }
           });
         }
       } else {
         _scrollControllerBottom.jumpTo(pixels - 1);
         if (_scrollControllerBottom.position.pixels <= 0) {
           _animationControllerBottom.stop();
-          Timer(const Duration(seconds: 5), () {
-            setState(() {
-              _scrollingForwardBottom = !_scrollingForwardBottom;
-              _animationControllerBottom.forward(from: 0);
-            });
+          Future.delayed(const Duration(seconds: 5), () {
+            if (mounted) {
+              setState(() {
+                _scrollingForwardBottom = !_scrollingForwardBottom;
+                _animationControllerBottom.forward(from: 0);
+              });
+            }
           });
         }
       }

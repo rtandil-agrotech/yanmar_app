@@ -300,7 +300,7 @@ class GraphWidgetAlter extends StatelessWidget {
             child: CircularProgressIndicator(),
           );
         } else if (state is MonthlyPlanProduksiDataFetcherDone) {
-          final data = state.result.expand((e) => e.details).toList().where((f) => f.actuals.length / f.qty * 100 >= 1);
+          final data = state.result.expand((e) => e.details).toList();
 
           return Wrap(
             runSpacing: 30,
