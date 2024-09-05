@@ -7,9 +7,11 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
 import 'package:yanmar_app/bloc/auth_bloc/auth_bloc.dart';
 import 'package:yanmar_app/bloc/rack_data_fetcher_bloc/rack_data_fetcher_bloc.dart';
+import 'package:yanmar_app/locator.dart';
 import 'package:yanmar_app/models/rack_model.dart';
 import 'package:yanmar_app/models/role_model.dart';
 import 'package:yanmar_app/pages/checklist/widgets/checkbox_widget.dart';
+import 'package:yanmar_app/repository/supabase_repository.dart';
 
 class ChecklistPage extends StatefulWidget {
   const ChecklistPage({
@@ -30,7 +32,7 @@ class _ChecklistPageState extends State<ChecklistPage> {
   final RackDataFetcherBloc _rackBloc = RackDataFetcherBloc();
 
   late PageController _pageController;
-  int _currentIndex = 0;
+  late int _currentIndex;
 
   @override
   void initState() {
@@ -125,6 +127,7 @@ class _ChecklistPageState extends State<ChecklistPage> {
                   ),
                 );
               } else {
+                _pageController = PageController(initialPage: _currentIndex);
                 return Stack(
                   alignment: Alignment.bottomCenter,
                   children: [
@@ -133,7 +136,7 @@ class _ChecklistPageState extends State<ChecklistPage> {
                       child: PageView.builder(
                         itemCount: state.data.length,
                         controller: _pageController,
-                        onPageChanged: (page) => _handlePageViewChanged(page, state.data),
+                        onPageChanged: _handlePageViewChanged,
                         itemBuilder: (context, index) {
                           final Stream stream = Stream.periodic(const Duration(seconds: 1),
                               (r) => state.data[index].startTime != null && DateTime.now().isAfter(state.data[index].startTime!));
@@ -146,8 +149,12 @@ class _ChecklistPageState extends State<ChecklistPage> {
                             }
                           });
 
+                          final ValueKey key = ValueKey('page-$index');
+
                           return PartsPage(
+                            key: key,
                             data: state.data[index],
+                            allData: state.data,
                           );
                         },
                       ),
@@ -192,7 +199,7 @@ class _ChecklistPageState extends State<ChecklistPage> {
     }
   }
 
-  void _handlePageViewChanged(int currentPageIndex, List<RackModel> data) {
+  void _handlePageViewChanged(int currentPageIndex) {
     if (!_isOnDesktopAndWeb) {
       return;
     }
@@ -233,9 +240,11 @@ class PartsPage extends StatefulWidget {
   const PartsPage({
     super.key,
     required this.data,
+    required this.allData,
   });
 
   final RackModel data;
+  final List<RackModel> allData;
 
   @override
   State<PartsPage> createState() => _PartsPageState();
@@ -338,22 +347,34 @@ class _PartsPageState extends State<PartsPage> with TickerProviderStateMixin {
                         widgets.addAll(
                           [
                             const Text('Status'),
-                            Container(
-                              margin: const EdgeInsets.all(5.0),
-                              height: 50,
-                              color: Colors.amber,
-                            ),
+                            () {
+                              final progress = widget.allData
+                                      .expand((element) => element.checklistHeader)
+                                      .expand((e) => e.details)
+                                      .map((f) => f.partId)
+                                      .toSet()
+                                      .length /
+                                  widget.allData
+                                      .expand((element) => element.details)
+                                      .expand((e) => e.masterProductionType.details)
+                                      .map((f) => f.parts)
+                                      .length;
+
+                              final remainingTime = widget.data.startTime?.difference(DateTime.now());
+
+                              if ((remainingTime!.compareTo(const Duration(minutes: 45)) < 0 && progress <= 0.25) ||
+                                  (remainingTime.compareTo(const Duration(minutes: 30)) < 0 && progress <= 0.5) ||
+                                  (remainingTime.compareTo(const Duration(minutes: 15)) < 0 && progress <= 0.75)) {
+                                return Container(
+                                  margin: const EdgeInsets.all(5.0),
+                                  height: 50,
+                                  color: Colors.amber,
+                                );
+                              }
+                              return Container();
+                            }(),
                           ],
                         );
-
-                        final AuthState authState = context.read<AuthBloc>().state;
-
-                        if (authState is AuthenticatedState && ChecklistPage.allowedUserRoles.contains(authState.user.role.name)) {
-                          widgets.addAll([
-                            const SizedBox(height: 20),
-                            TextButton(onPressed: () {}, child: const Text('Submit')),
-                          ]);
-                        }
 
                         return widgets;
                       }(),
@@ -388,7 +409,7 @@ class _PartsPageState extends State<PartsPage> with TickerProviderStateMixin {
                                       .where((e) => e.parts.opAssemblyId == widget.data.opAssemblyModel[index].id)
                                       .map((e) => e.parts)
                                       .length,
-                                  itemBuilder: (context, i) => Padding(
+                                  itemBuilder: (_, i) => Padding(
                                     padding: const EdgeInsets.only(left: 8.0, right: 10),
                                     child: Row(
                                       children: [
@@ -396,11 +417,40 @@ class _PartsPageState extends State<PartsPage> with TickerProviderStateMixin {
                                           final AuthState authState = context.read<AuthBloc>().state;
 
                                           if (authState is AuthenticatedState && ChecklistPage.allowedUserRoles.contains(authState.user.role.name)) {
-                                            final ValueKey _checkboxKey = ValueKey('checkbox-$i');
+                                            final ValueKey checkboxKey = ValueKey('checkbox-$i');
+
+                                            final currentPartId = widget.data.details
+                                                .expand((element) => element.masterProductionType.details)
+                                                .where((e) => e.parts.opAssemblyId == widget.data.opAssemblyModel[index].id)
+                                                .map((e) => e.parts)
+                                                .toList()[i]
+                                                .id;
+
+                                            final status = widget.data.checklistHeader
+                                                .expand((e) => e.details)
+                                                .toList()
+                                                .where((f) => f.partId == currentPartId)
+                                                .toList()
+                                                .isNotEmpty;
 
                                             return CheckboxWidget(
-                                              key: _checkboxKey,
-                                              onChangeCallback: () {},
+                                              key: checkboxKey,
+                                              status: status,
+                                              onChangeCallback: () async {
+                                                final repo = locator.get<SupabaseRepository>();
+
+                                                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Loading...')));
+
+                                                await repo.insertChecklist(widget.data.headerId!, currentPartId, authState.user.id);
+
+                                                if (context.mounted) {
+                                                  ScaffoldMessenger.of(context).hideCurrentSnackBar();
+                                                }
+
+                                                if (context.mounted) {
+                                                  context.read<RackDataFetcherBloc>().add(FetchRackData());
+                                                }
+                                              },
                                             );
                                           }
                                           return Container();

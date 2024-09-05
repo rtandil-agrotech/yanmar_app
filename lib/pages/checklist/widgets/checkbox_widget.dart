@@ -1,34 +1,33 @@
 import 'package:flutter/material.dart';
 
 class CheckboxWidget extends StatefulWidget {
-  const CheckboxWidget({super.key, required this.onChangeCallback});
+  const CheckboxWidget({super.key, required this.status, required this.onChangeCallback});
 
   final Function onChangeCallback;
+  final bool status;
 
   @override
   State<CheckboxWidget> createState() => _CheckboxWidgetState();
 }
 
 class _CheckboxWidgetState extends State<CheckboxWidget> {
-  bool checkboxValue = false;
-  int pressed = 0;
+  late bool checkboxValue;
+
+  @override
+  void initState() {
+    checkboxValue = widget.status;
+    super.initState();
+  }
 
   @override
   Widget build(BuildContext context) {
     return Checkbox(
       value: checkboxValue,
       onChanged: (bool? value) {
-        if (value != null) {
-          if (value == true) {
-            if (pressed == 0) {
-              widget.onChangeCallback();
-            }
-            pressed++;
-          }
+        if (value != null && value == true) {
+          checkboxValue = value;
 
-          setState(() {
-            checkboxValue = value;
-          });
+          widget.onChangeCallback();
         }
       },
     );

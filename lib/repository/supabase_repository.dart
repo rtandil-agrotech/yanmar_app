@@ -191,9 +191,11 @@ class SupabaseRepository {
 
       RackModel model = RackModel.fromSupabase(
         result[i],
+        planHeader.isNotEmpty ? planHeader[0]['id'] : null,
         planHeader.isNotEmpty ? planHeader[0]['production_plan_detail'] : null,
         planHeader.isNotEmpty ? planHeader[0]['start_time'] : null,
         planHeader.isNotEmpty ? planHeader[0]['end_time'] : null,
+        planHeader.isNotEmpty ? planHeader[0]['checklist_header'] : null,
       );
       rackModel.add(model);
     }
@@ -205,7 +207,7 @@ class SupabaseRepository {
     final result = await _client.from('checklist_header').select('id').eq('production_plan_header_id', prodPlanHeaderId).limit(1);
     int id;
 
-    if (result.first.isEmpty) {
+    if (result.isEmpty) {
       final header = SetChecklistHeaderModel(
         prodPlanHeaderId: prodPlanHeaderId,
         picId: userId,
@@ -231,7 +233,17 @@ class SupabaseRepository {
         .from('production_plan_header')
         .select('id, production_plan_detail(id, master_production_type_header(id, master_production_type_detail(id, part_id)))');
 
-    final checklistParts = allDetail.expand<List<Map<String, dynamic>>>((e) => e['checklist_detail']).toList();
+    final checklistParts = allDetail.expand((e) => e['checklist_detail']).map((f) => f['part_id']).toList();
+    final responseParts = response
+        .expand((e) => e['production_plan_detail'])
+        .map((f) => f['master_production_type_header'])
+        .expand((g) => g['master_production_type_detail'])
+        .map((h) => h['part_id'])
+        .toList();
+
+    if (checklistParts.length == responseParts.length) {
+      await _client.from('checklist_header').update({'all_check_done_time': DateTime.now().toIso8601String()}).eq('id', id);
+    }
   }
 
   /* -------------------------- Monthly Plan Produksi ------------------------- */

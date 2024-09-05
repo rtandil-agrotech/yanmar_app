@@ -7,8 +7,10 @@ class RackModel extends Equatable {
   final String rackName;
   final DateTime? startTime;
   final DateTime? endTime;
+  final int? headerId;
   final List<OpAssemblyModel> opAssemblyModel;
   final List<ChecklistDetailModel> details;
+  final List<ChecklistHeaderStatusModel> checklistHeader;
 
   const RackModel({
     required this.id,
@@ -16,10 +18,13 @@ class RackModel extends Equatable {
     required this.startTime,
     required this.endTime,
     required this.opAssemblyModel,
+    required this.headerId,
     required this.details,
+    required this.checklistHeader,
   });
 
-  factory RackModel.fromSupabase(Map<String, dynamic> map, List<dynamic>? details, dynamic startTime, dynamic endTime) {
+  factory RackModel.fromSupabase(
+      Map<String, dynamic> map, int? headerId, List<dynamic>? details, dynamic startTime, dynamic endTime, List<dynamic>? checklistHeader) {
     final List<OpAssemblyModel> opAssy = (map['master_op_assembly'] as List<dynamic>?)?.map((e) => OpAssemblyModel.fromSupabase(e)).toList() ?? [];
 
     return RackModel(
@@ -27,8 +32,10 @@ class RackModel extends Equatable {
       rackName: (map['rack_name'] as int).toString(),
       startTime: startTime != null ? DateTime.parse(startTime) : null,
       endTime: endTime != null ? DateTime.parse(endTime) : null,
+      headerId: headerId,
       opAssemblyModel: opAssy,
       details: (details ?? []).map((e) => ChecklistDetailModel.fromSupabase(e)).toList(),
+      checklistHeader: (checklistHeader ?? []).map((e) => ChecklistHeaderStatusModel.fromSupabase(e)).toList(),
     );
   }
 
