@@ -2,6 +2,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:yanmar_app/models/delivery_model.dart';
 import 'package:yanmar_app/models/plan_produksi_model.dart';
 import 'package:yanmar_app/models/rack_model.dart';
+import 'package:yanmar_app/models/set_checklist_model.dart';
 import 'package:yanmar_app/models/upload_plan_produksi_model.dart';
 import 'package:yanmar_app/models/user_model.dart';
 
@@ -170,7 +171,7 @@ class SupabaseRepository {
       final planHeader = await _client
           .from('production_plan_header')
           .select(
-              'id, start_time, end_time, production_plan_detail(id, master_production_type_header(id, type_name, master_production_type_detail(id, master_parts(id, op_assembly_id, part_code, part_name, locator), part_qty)) ,production_qty, order)')
+              'id, start_time, end_time, production_plan_detail(id, master_production_type_header(id, type_name, master_production_type_detail(id, master_parts(id, op_assembly_id, part_code, part_name, locator), part_qty)) ,production_qty, order), checklist_header(id, checker_pic_id, is_help_pressed, all_check_done_time, checklist_detail(id, part_id, checked_done_time))')
           .gte('start_time', currentTime.toUtc().toIso8601String())
           .gte('start_time', startOfDay.toUtc().toIso8601String())
           .lte('end_time', endOfDay.toUtc().toIso8601String())
@@ -198,6 +199,39 @@ class SupabaseRepository {
     }
 
     return rackModel;
+  }
+
+  Future insertChecklist(int prodPlanHeaderId, int partId, int userId) async {
+    final result = await _client.from('checklist_header').select('id').eq('production_plan_header_id', prodPlanHeaderId).limit(1);
+    int id;
+
+    if (result.first.isEmpty) {
+      final header = SetChecklistHeaderModel(
+        prodPlanHeaderId: prodPlanHeaderId,
+        picId: userId,
+        isHelpedPressed: false,
+        allCheckDoneTime: null,
+      );
+
+      final headerId = await _client.from('checklist_header').insert(header.toJson()).select('id');
+
+      id = headerId.first['id'];
+    } else {
+      id = result.first['id'];
+    }
+
+    final detail = SetChecklistDetailModel(headerId: id, partId: partId, checkedDoneTime: DateTime.now());
+
+    await _client.from('checklist_detail').insert(detail.toJson());
+
+    // Update all check done if all parts from plan header are checked
+    final allDetail = await _client.from('checklist_header').select('id, checklist_detail(id, part_id)');
+
+    final response = await _client
+        .from('production_plan_header')
+        .select('id, production_plan_detail(id, master_production_type_header(id, master_production_type_detail(id, part_id)))');
+
+    final checklistParts = allDetail.expand<List<Map<String, dynamic>>>((e) => e['checklist_detail']).toList();
   }
 
   /* -------------------------- Monthly Plan Produksi ------------------------- */

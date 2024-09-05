@@ -130,3 +130,37 @@ class ChecklistParts extends Equatable {
         locator,
       ];
 }
+
+class ChecklistHeaderStatusModel extends Equatable {
+  final int id;
+  final int picId;
+  final bool isHelpPressed;
+  final DateTime? allCheckDoneTime;
+  final List<ChecklistDetailModel> details;
+
+  const ChecklistHeaderStatusModel({
+    required this.id,
+    required this.picId,
+    required this.isHelpPressed,
+    required this.allCheckDoneTime,
+    required this.details,
+  });
+
+  @override
+  List<Object?> get props => [id, picId, isHelpPressed, allCheckDoneTime, details];
+}
+
+class ChecklistDetailStatusModel extends Equatable {
+  final int id;
+  final int partId;
+  final DateTime? checkedDoneTime;
+
+  const ChecklistDetailStatusModel({
+    required this.id,
+    required this.partId,
+    required this.checkedDoneTime,
+  });
+
+  @override
+  List<Object?> get props => [id, partId, checkedDoneTime];
+}

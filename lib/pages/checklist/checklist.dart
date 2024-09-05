@@ -5,8 +5,11 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
+import 'package:yanmar_app/bloc/auth_bloc/auth_bloc.dart';
 import 'package:yanmar_app/bloc/rack_data_fetcher_bloc/rack_data_fetcher_bloc.dart';
 import 'package:yanmar_app/models/rack_model.dart';
+import 'package:yanmar_app/models/role_model.dart';
+import 'package:yanmar_app/pages/checklist/widgets/checkbox_widget.dart';
 
 class ChecklistPage extends StatefulWidget {
   const ChecklistPage({
@@ -16,6 +19,7 @@ class ChecklistPage extends StatefulWidget {
 
   final int initialPage;
 
+  static const allowedUserRoles = [superAdminRole, picRole];
   static const route = '/checklist';
 
   @override
@@ -331,6 +335,26 @@ class _PartsPageState extends State<PartsPage> with TickerProviderStateMixin {
                           ]);
                         }
 
+                        widgets.addAll(
+                          [
+                            const Text('Status'),
+                            Container(
+                              margin: const EdgeInsets.all(5.0),
+                              height: 50,
+                              color: Colors.amber,
+                            ),
+                          ],
+                        );
+
+                        final AuthState authState = context.read<AuthBloc>().state;
+
+                        if (authState is AuthenticatedState && ChecklistPage.allowedUserRoles.contains(authState.user.role.name)) {
+                          widgets.addAll([
+                            const SizedBox(height: 20),
+                            TextButton(onPressed: () {}, child: const Text('Submit')),
+                          ]);
+                        }
+
                         return widgets;
                       }(),
                     ],
@@ -368,6 +392,19 @@ class _PartsPageState extends State<PartsPage> with TickerProviderStateMixin {
                                     padding: const EdgeInsets.only(left: 8.0, right: 10),
                                     child: Row(
                                       children: [
+                                        () {
+                                          final AuthState authState = context.read<AuthBloc>().state;
+
+                                          if (authState is AuthenticatedState && ChecklistPage.allowedUserRoles.contains(authState.user.role.name)) {
+                                            final ValueKey _checkboxKey = ValueKey('checkbox-$i');
+
+                                            return CheckboxWidget(
+                                              key: _checkboxKey,
+                                              onChangeCallback: () {},
+                                            );
+                                          }
+                                          return Container();
+                                        }(),
                                         Expanded(
                                           child: Column(
                                             mainAxisSize: MainAxisSize.min,
