@@ -1,6 +1,8 @@
 import 'package:excel/excel.dart';
 import 'package:file_picker/file_picker.dart';
+import 'package:file_saver/file_saver.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
@@ -56,6 +58,29 @@ class _UploadDailyPlanPageState extends State<UploadDailyPlanPage> {
         appBar: AppBar(
           title: const Text('Upload Daily Plan'),
           centerTitle: true,
+          actions: [
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 8.0),
+              child: TextButton(
+                onPressed: () async {
+                  final ByteData data = await rootBundle.load('assets/template_excel/Template Upload Daily Plan.xlsx');
+                  Uint8List fileData = data.buffer.asUint8List();
+
+                  String fileName = 'Template Upload Daily Plan';
+                  MimeType mimeType = MimeType.custom;
+
+                  await FileSaver.instance.saveFile(
+                    name: fileName,
+                    bytes: fileData,
+                    ext: 'xlsx',
+                    mimeType: mimeType,
+                    customMimeType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+                  );
+                },
+                child: const Text('Download Template Excel'),
+              ),
+            ),
+          ],
         ),
         body: MultiBlocListener(
           listeners: [

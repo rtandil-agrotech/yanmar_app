@@ -22,6 +22,7 @@ dependencies:
   percent_indicator: ^4.2.3
   excel: ^4.0.6
   file_picker: ^8.1.2
+  file_saver: ^0.2.14
 
 dev_dependencies:
   flutter_test:
@@ -32,6 +33,9 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
+
+  assets:
+    - assets/template_excel/
 
   fonts:
     - family: Roboto
