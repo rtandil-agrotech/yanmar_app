@@ -33,6 +33,23 @@ class _LoginPageState extends State<LoginPage> {
         listener: (context, state) {
           if (state is AuthenticatedState) {
             context.go('/');
+          } else if (state is FailedToAuthenticate) {
+            showDialog(
+                context: context,
+                builder: (_) {
+                  return AlertDialog(
+                    title: const Text('Failed to Login'),
+                    content: Text(state.message),
+                    actions: [
+                      TextButton(
+                        onPressed: () {
+                          _.pop();
+                        },
+                        child: const Text('Dismiss'),
+                      )
+                    ],
+                  );
+                });
           }
         },
         child: Form(

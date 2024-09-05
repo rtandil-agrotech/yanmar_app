@@ -13,6 +13,17 @@ final class AuthenticatedState extends AuthState {
   final UserModel user;
 
   const AuthenticatedState({required this.user});
+
+  @override
+  List<Object> get props => [user];
 }
 
 final class UnauthenticatedState extends AuthState {}
+
+final class FailedToAuthenticate extends AuthState {
+  final String message;
+  const FailedToAuthenticate(this.message);
+
+  @override
+  List<Object> get props => [message];
+}
