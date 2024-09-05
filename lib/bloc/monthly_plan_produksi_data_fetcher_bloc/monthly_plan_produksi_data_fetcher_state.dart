@@ -14,9 +14,15 @@ final class MonthlyPlanProduksiDataFetcherLoading extends MonthlyPlanProduksiDat
 final class MonthlyPlanProduksiDataFetcherDone extends MonthlyPlanProduksiDataFetcherState {
   final List<MonthlyPlanProduksiModel> result;
   const MonthlyPlanProduksiDataFetcherDone(this.result);
+
+  @override
+  List<Object> get props => [result];
 }
 
 final class MonthlyPlanProduksiDataFetcherFailed extends MonthlyPlanProduksiDataFetcherState {
   final String message;
   const MonthlyPlanProduksiDataFetcherFailed(this.message);
+
+  @override
+  List<Object> get props => [message];
 }

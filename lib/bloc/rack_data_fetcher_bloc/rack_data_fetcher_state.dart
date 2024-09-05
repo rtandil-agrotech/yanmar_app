@@ -15,10 +15,16 @@ final class RackDataFetcherDone extends RackDataFetcherState {
   final List<RackModel> data;
 
   const RackDataFetcherDone(this.data);
+
+  @override
+  List<Object> get props => [data];
 }
 
 final class RackDataFetcherFailed extends RackDataFetcherState {
   final String message;
 
   const RackDataFetcherFailed(this.message);
+
+  @override
+  List<Object> get props => [message];
 }

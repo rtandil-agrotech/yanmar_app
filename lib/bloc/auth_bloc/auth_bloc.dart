@@ -2,31 +2,46 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:equatable/equatable.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:yanmar_app/locator.dart';
+import 'package:yanmar_app/models/user_model.dart';
 import 'package:yanmar_app/repository/auth_repository.dart';
+import 'package:yanmar_app/repository/supabase_repository.dart';
 
 part 'auth_event.dart';
 part 'auth_state.dart';
 
 class AuthBloc extends Bloc<AuthEvent, AuthState> {
   AuthBloc() : super(AuthInitial()) {
-    _repo.authStateChangeStream.listen((data) {
+    _authRepo.authStateChangeStream.listen((data) {
       add(AuthStateChange(data.event));
     });
 
-    on<AuthStateChange>((event, emit) {
+    on<AuthStateChange>((event, emit) async {
       if (event.data == AuthChangeEvent.signedIn) {
-        emit(AuthenticatedState());
+        final uuid = _authRepo.currentUser!.id;
+        final user = await _dbRepo.getLoggedUser(uuid: uuid);
+        emit(AuthenticatedState(user: user));
       } else if (event.data == AuthChangeEvent.signedOut) {
         emit(UnauthenticatedState());
       } else if (event.data == AuthChangeEvent.initialSession) {
-        if (_repo.currentSession != null) {
-          emit(AuthenticatedState());
+        if (_authRepo.currentSession != null) {
+          final uuid = _authRepo.currentUser!.id;
+          final user = await _dbRepo.getLoggedUser(uuid: uuid);
+          emit(AuthenticatedState(user: user));
         } else {
           emit(UnauthenticatedState());
         }
       }
     });
+
+    on<LogIn>((event, emit) async {
+      await _authRepo.login(email: event.email, password: event.password);
+    });
+
+    on<LogOut>((event, emit) async {
+      await _authRepo.logout();
+    });
   }
 
-  final _repo = locator.get<AuthRepository>();
+  final _authRepo = locator.get<AuthRepository>();
+  final _dbRepo = locator.get<SupabaseRepository>();
 }

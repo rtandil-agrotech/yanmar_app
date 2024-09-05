@@ -2,6 +2,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:yanmar_app/models/delivery_model.dart';
 import 'package:yanmar_app/models/plan_produksi_model.dart';
 import 'package:yanmar_app/models/rack_model.dart';
+import 'package:yanmar_app/models/user_model.dart';
 
 class SupabaseRepository {
   SupabaseRepository(SupabaseClient client) : _client = client;
@@ -174,5 +175,14 @@ class SupabaseRepository {
     final List<MonthlyPlanProduksiModel> monthlyPlanProduksiModel = result.map((e) => MonthlyPlanProduksiModel.fromSupabase(e, actuals)).toList();
 
     return monthlyPlanProduksiModel;
+  }
+
+  /* ---------------------------------- Users --------------------------------- */
+  Future<UserModel> getLoggedUser({required String uuid}) async {
+    final result = await _client.from('users').select('id, username, user_roles(id, role_name), uuid').isFilter('deleted_at', null).limit(1);
+
+    final userModel = result.map((e) => UserModel.fromSupabase(e)).toList().first;
+
+    return userModel;
   }
 }

@@ -19,4 +19,7 @@ final class PlanProduksiDataFetcherDone extends PlanProduksiDataFetcherState {
 final class PlanProduksiDataFetcherError extends PlanProduksiDataFetcherState {
   final String message;
   const PlanProduksiDataFetcherError({required this.message});
+
+  @override
+  List<Object> get props => [message];
 }
