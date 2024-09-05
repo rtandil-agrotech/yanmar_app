@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_web_plugins/url_strategy.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:yanmar_app/bloc/auth_bloc/auth_bloc.dart';
 import 'package:yanmar_app/locator.dart';
 import 'package:yanmar_app/observer.dart';
 import 'package:yanmar_app/router.dart';
@@ -14,20 +15,25 @@ Future<void> main() async {
 
   Bloc.observer = AppBlocObserver();
 
-  runApp(const MainApp());
+  runApp(MainApp());
 }
 
 class MainApp extends StatelessWidget {
-  const MainApp({super.key});
+  MainApp({super.key});
+
+  final _auth = AuthBloc();
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp.router(
-      debugShowCheckedModeBanner: false,
-      routerConfig: router,
-      theme: ThemeData(
-        brightness: Brightness.dark,
-        fontFamily: 'Gotham',
+    return BlocProvider(
+      create: (context) => _auth,
+      child: MaterialApp.router(
+        debugShowCheckedModeBanner: false,
+        routerConfig: router,
+        theme: ThemeData(
+          brightness: Brightness.dark,
+          fontFamily: 'Gotham',
+        ),
       ),
     );
   }
