@@ -130,3 +130,55 @@ class ChecklistParts extends Equatable {
         locator,
       ];
 }
+
+class ChecklistHeaderStatusModel extends Equatable {
+  final int id;
+  final int picId;
+  final bool isHelpPressed;
+  final DateTime? allCheckDoneTime;
+  final List<ChecklistDetailStatusModel> details;
+
+  const ChecklistHeaderStatusModel({
+    required this.id,
+    required this.picId,
+    required this.isHelpPressed,
+    required this.allCheckDoneTime,
+    required this.details,
+  });
+
+  factory ChecklistHeaderStatusModel.fromSupabase(Map<String, dynamic> json) {
+    return ChecklistHeaderStatusModel(
+      id: json['id'],
+      picId: json['checker_pic_id'],
+      isHelpPressed: json['is_help_pressed'],
+      allCheckDoneTime: json['all_check_done_time'] != null ? DateTime.parse(json['all_check_done_time']) : null,
+      details: (json['checklist_detail'] as List?)?.map((e) => ChecklistDetailStatusModel.fromSupabase(e)).toList() ?? [],
+    );
+  }
+
+  @override
+  List<Object?> get props => [id, picId, isHelpPressed, allCheckDoneTime, details];
+}
+
+class ChecklistDetailStatusModel extends Equatable {
+  final int id;
+  final int partId;
+  final DateTime? checkedDoneTime;
+
+  const ChecklistDetailStatusModel({
+    required this.id,
+    required this.partId,
+    required this.checkedDoneTime,
+  });
+
+  factory ChecklistDetailStatusModel.fromSupabase(Map<String, dynamic> json) {
+    return ChecklistDetailStatusModel(
+      id: json['id'],
+      partId: json['part_id'],
+      checkedDoneTime: json['checked_done_time'] != null ? DateTime.parse(json['checked_done_time']) : null,
+    );
+  }
+
+  @override
+  List<Object?> get props => [id, partId, checkedDoneTime];
+}

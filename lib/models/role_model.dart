@@ -18,3 +18,4 @@ const superAdminRole = 'Super Admin';
 const adminRole = 'Admin';
 const monitoringRole = 'Monitoring';
 const supervisorRole = 'Supervisor';
+const picRole = 'PIC';
