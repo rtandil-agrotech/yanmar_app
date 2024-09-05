@@ -20,6 +20,8 @@ dependencies:
   equatable: ^2.0.5
   fl_chart: ^0.68.0
   percent_indicator: ^4.2.3
+  excel: ^4.0.6
+  file_picker: ^8.1.2
 
 dev_dependencies:
   flutter_test:

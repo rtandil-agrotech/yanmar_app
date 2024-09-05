@@ -6,9 +6,12 @@ import 'package:yanmar_app/helper/circle_avatar_name.dart';
 import 'package:yanmar_app/pages/assembly/assembly.dart';
 import 'package:yanmar_app/pages/checklist/checklist.dart';
 import 'package:yanmar_app/pages/delivery/delivery.dart';
+import 'package:yanmar_app/pages/upload_daily_plan/upload_daily_plan.dart';
 
 class HomePage extends StatelessWidget {
   const HomePage({super.key});
+
+  static const route = '/';
 
   @override
   Widget build(BuildContext context) {
@@ -105,6 +108,25 @@ class HomePage extends StatelessWidget {
                           },
                         ),
                       ),
+                      BlocBuilder<AuthBloc, AuthState>(
+                        builder: (context, state) {
+                          if (state is AuthenticatedState) {
+                            if (UploadDailyPlanPage.allowedUserRoles.contains(state.user.role.name)) {
+                              return Card(
+                                child: ListTile(
+                                  iconColor: Colors.blue,
+                                  title: const Text('Upload Daily Plan'),
+                                  subtitle: const Text('Go to page'),
+                                  onTap: () {
+                                    context.go(UploadDailyPlanPage.route);
+                                  },
+                                ),
+                              );
+                            }
+                          }
+                          return Container();
+                        },
+                      )
                     ],
                   ),
                 ),

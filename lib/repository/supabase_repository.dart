@@ -2,6 +2,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:yanmar_app/models/delivery_model.dart';
 import 'package:yanmar_app/models/plan_produksi_model.dart';
 import 'package:yanmar_app/models/rack_model.dart';
+import 'package:yanmar_app/models/upload_plan_produksi_model.dart';
 import 'package:yanmar_app/models/user_model.dart';
 
 class SupabaseRepository {
@@ -27,6 +28,54 @@ class SupabaseRepository {
     final List<PlanProduksiModel> planProduksiModel = result.map((e) => PlanProduksiModel.fromSupabase(e)).toList();
 
     return planProduksiModel;
+  }
+
+  Future<void> deletePlanProduksi({required List<int> id}) async {
+    for (int i = 0; i < id.length; i++) {
+      await _client.from('production_plan_detail').delete().eq('header_id', '${id[i]}');
+      await _client.from('production_plan_header').delete().eq('id', '${id[i]}');
+    }
+  }
+
+  Future<void> insertPlanProduksi(Map<String, dynamic> excelData, int createdBy) async {
+    // Loop through all headers
+    final headersList = excelData['time_slot'] as List<Map<String, dynamic>>;
+    final detailsList = excelData['plan_slot'] as List<Map<String, dynamic>>;
+
+    final headerIdList = [];
+
+    for (int i = 0; i < headersList.length; i++) {
+      final UploadPlanProduksiHeaderModel header = UploadPlanProduksiHeaderModel(
+        startTime: headersList[i]['start_time'] as DateTime,
+        endTime: headersList[i]['end_time'] as DateTime,
+        createdBy: createdBy,
+      );
+
+      final headerId = await _client.from('production_plan_header').insert(header.toJson()).select('id');
+
+      headerIdList.add(headerId.first['id']);
+    }
+
+    for (int i = 0; i < detailsList.length; i++) {
+      for (int j = 0; j < (detailsList[i]['zone'] as List).length; j++) {
+        if (detailsList[i]['zone'][j] > 0) {
+          final prodTypeId = await _client.from('master_production_type_header').select('id').eq('type_name', detailsList[i]['model']).limit(1);
+
+          if (prodTypeId.first['id'] == null) throw Exception("Production Type Id not found");
+
+          final order = await _client.from('production_plan_detail').select('id').eq('header_id', headerIdList[j]).count(CountOption.exact);
+
+          final UploadPlanProduksiDetailModel detail = UploadPlanProduksiDetailModel(
+            headerId: headerIdList[j],
+            productionTypeId: prodTypeId.first['id'],
+            productionQty: detailsList[i]['zone'][j],
+            order: order.count + 1,
+          );
+
+          await _client.from('production_plan_detail').insert(detail.toJson());
+        }
+      }
+    }
   }
 
   RealtimeChannel subscribeToProductionActualChanges(void Function(PostgresChangePayload) callback) {
