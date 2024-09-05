@@ -115,13 +115,13 @@ class SupabaseRepository {
       final opAssIdList = (result[i]['master_op_assembly'] as List).map((e) => e['id']).toList();
 
       // Get header where:
-      // - 1st header where end_time is greater than now
+      // - 1st header where start_time is greater than now
       // - start_time and end_time between startOfDay and endOfDay
       final planHeader = await _client
           .from('production_plan_header')
           .select(
               'id, start_time, end_time, production_plan_detail(id, master_production_type_header(id, type_name, master_production_type_detail(id, master_parts(id, op_assembly_id, part_code, part_name, locator), part_qty)) ,production_qty, order)')
-          .gte('end_time', currentTime.toUtc().toIso8601String())
+          .gte('start_time', currentTime.toUtc().toIso8601String())
           .gte('start_time', startOfDay.toUtc().toIso8601String())
           .lte('end_time', endOfDay.toUtc().toIso8601String())
           .inFilter('production_plan_detail.master_production_type_header.master_production_type_detail.master_parts.op_assembly_id', opAssIdList)
