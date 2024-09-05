@@ -13,3 +13,5 @@ class RoleModel extends Equatable {
   @override
   List<Object?> get props => [id, name];
 }
+
+const List<String> roles = ['Super Admin', 'Admin', 'Monitoring', 'Supervisor'];
