@@ -274,7 +274,7 @@ class SupabaseRepository {
 
   /* ---------------------------------- Users --------------------------------- */
   Future<UserModel> getLoggedUser({required String uuid}) async {
-    final result = await _client.from('users').select('id, username, user_roles(id, role_name), uuid').isFilter('deleted_at', null).limit(1);
+    final result = await _client.from('users').select('id, username, user_roles(id, role_name), uuid').isFilter('deleted_at', null).eq('uuid', uuid).limit(1);
 
     final userModel = result.map((e) => UserModel.fromSupabase(e)).toList().first;
 
