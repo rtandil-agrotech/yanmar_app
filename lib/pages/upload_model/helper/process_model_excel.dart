@@ -17,7 +17,7 @@ List<Map<String, dynamic>> processExcel(Excel excel) {
     }
   }
 
-  if (errorHeader.isNotEmpty) throw Exception(errorHeader.join('\n'));
+  if (errorHeader.isNotEmpty) throw Exception('\n${errorHeader.join('\n')}');
 
   /* ------------------------------ Process Excel ----------------------------- */
   List<Map<String, dynamic>> partSlot = [];
@@ -26,7 +26,7 @@ List<Map<String, dynamic>> processExcel(Excel excel) {
     final partRow = excel.tables['Sheet1']!.rows[i];
 
     // If op assy row is null or empty, skip
-    if (partRow[5]?.value.toString().isEmpty ?? true) continue;
+    if (partRow[5]?.value.toString() == 'null') continue;
 
     partSlot.add({
       'part_code': partRow[0]?.value.toString() ?? '',
@@ -34,6 +34,7 @@ List<Map<String, dynamic>> processExcel(Excel excel) {
       'locator': partRow[2]?.value.toString() ?? '',
       'pic': partRow[3]?.value.toString() ?? '',
       'rack': partRow[4]?.value.toString() ?? '',
+      'op_assy': partRow[5]!.value.toString(),
       'rack_placement': partRow[6]?.value.toString() ?? '',
       'qty': int.tryParse(partRow[7]?.value.toString() ?? '0'),
     });

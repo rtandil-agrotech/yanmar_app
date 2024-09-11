@@ -1,4 +1,5 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:yanmar_app/helper/assign_estimated_production_duration.dart';
 import 'package:yanmar_app/models/delivery_model.dart';
 import 'package:yanmar_app/models/plan_produksi_model.dart';
 import 'package:yanmar_app/models/production_type_model.dart';
@@ -275,17 +276,22 @@ class SupabaseRepository {
   }
 
   /* ------------------------------ UPLOAD MODEL ------------------------------ */
-  Future<List<MasterProductionTypeModel>> getMasterProductionType({required int page, required int limit}) async {
+  Future<Map<String, dynamic>> getMasterProductionType({required int page, required int limit}) async {
     final result = await _client
         .from('master_production_type_header')
         .select('id, type_name, estimated_production_duration, created_at')
         .isFilter('deleted_at', null)
-        .order('id', ascending: false)
+        .order('created_at', ascending: false)
         .range((page - 1) * limit, page * limit - 1);
+
+    final total = await _client.from('master_production_type_header').select('id').isFilter('deleted_at', null).count(CountOption.exact);
 
     final List<MasterProductionTypeModel> models = result.map((e) => MasterProductionTypeModel.fromSupabase(e)).toList();
 
-    return models;
+    return {
+      'data': models,
+      'meta': {'page': page, 'limit': limit, 'total': total.count}
+    };
   }
 
   Future<List<MasterProductionTypeDetailModel>> getMasterProductionTypeDetail({required int typeId}) async {
@@ -303,7 +309,85 @@ class SupabaseRepository {
     await _client.from('master_production_type_header').update({'deleted_at': DateTime.now().toUtc().toIso8601String()}).eq('id', id);
   }
 
-  Future<void> insertMasterProductionType(Map<String, dynamic> excelData, String modelName) async {}
+  Future<void> insertMasterProductionType(List<Map<String, dynamic>> excelData, String modelName) async {
+    // Check if model name exist
+    int? modelId = await _client
+        .from('master_production_type_header')
+        .select('id')
+        .eq('type_name', modelName)
+        .limit(1)
+        .then((value) => value.isNotEmpty ? value.first['id'] : null);
+
+    modelId ??= await _client
+        .from('master_production_type_header')
+        .insert({'type_name': modelName, 'estimated_production_duration': getEstimatedProductionDuration(modelName)})
+        .select('id')
+        .limit(1)
+        .then((value) => value.isNotEmpty ? value.first['id'] : null);
+
+    // Loop through all rows
+    for (var data in excelData) {
+      int? partId = await _client
+          .from('master_parts')
+          .select('id')
+          .eq('part_code', data['part_code'])
+          .limit(1)
+          .then((value) => value.isNotEmpty ? value.first['id'] : null);
+
+      int? opAssId;
+      int? rackId;
+
+      if (partId == null) {
+        final rack = (data['rack_placement'] as String).toLowerCase();
+
+        opAssId = await _client
+            .from('master_op_assembly')
+            .select('id, master_rack(id)')
+            .eq('rack_placement', '${rack[0].toUpperCase()}${rack.substring(1)}')
+            .eq('master_rack.rack_name', data['rack'])
+            .limit(1)
+            .then((value) => value.isNotEmpty ? value.first['id'] : null);
+
+        if (opAssId == null) {
+          rackId = await _client
+              .from('master_rack')
+              .select('id')
+              .eq('rack_name', data['rack'])
+              .limit(1)
+              .then((value) => value.isNotEmpty ? value.first['id'] : null);
+
+          rackId ??= await _client
+              .from('master_rack')
+              .insert({'rack_name': data['rack']})
+              .select('id')
+              .limit(1)
+              .then((value) => value.isNotEmpty ? value.first['id'] : null);
+
+          opAssId = await _client
+              .from('master_op_assembly')
+              .insert({'rack_id': rackId, 'assembly_name': data['op_assy'], 'rack_placement': '${rack[0].toUpperCase()}${rack.substring(1)}'})
+              .select('id')
+              .limit(1)
+              .then((value) => value.isNotEmpty ? value.first['id'] : null);
+        }
+
+        partId = await _client
+            .from('master_parts')
+            .insert({
+              'part_code': data['part_code'],
+              'part_name': data['part_description'],
+              'op_assembly_id': opAssId,
+              'pic_name': data['pic'],
+              'locator': data['locator']
+            })
+            .select('id')
+            .limit(1)
+            .then((value) => value.isNotEmpty ? value.first['id'] : null);
+      }
+
+      await _client.from('master_production_type_detail').insert({'header_id': modelId, 'part_id': partId, 'part_qty': data['qty']});
+    }
+  }
 
   /* ---------------------------------- Users --------------------------------- */
   Future<UserModel> getLoggedUser({required String uuid}) async {
