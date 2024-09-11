@@ -1,6 +1,7 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:yanmar_app/models/delivery_model.dart';
 import 'package:yanmar_app/models/plan_produksi_model.dart';
+import 'package:yanmar_app/models/production_type_model.dart';
 import 'package:yanmar_app/models/rack_model.dart';
 import 'package:yanmar_app/models/set_checklist_model.dart';
 import 'package:yanmar_app/models/upload_plan_produksi_model.dart';
@@ -272,6 +273,37 @@ class SupabaseRepository {
       }
     }
   }
+
+  /* ------------------------------ UPLOAD MODEL ------------------------------ */
+  Future<List<MasterProductionTypeModel>> getMasterProductionType({required int page, required int limit}) async {
+    final result = await _client
+        .from('master_production_type_header')
+        .select('id, type_name, estimated_production_duration, created_at')
+        .isFilter('deleted_at', null)
+        .order('id', ascending: false)
+        .range((page - 1) * limit, page * limit - 1);
+
+    final List<MasterProductionTypeModel> models = result.map((e) => MasterProductionTypeModel.fromSupabase(e)).toList();
+
+    return models;
+  }
+
+  Future<List<MasterProductionTypeDetailModel>> getMasterProductionTypeDetail({required int typeId}) async {
+    final result = await _client
+        .from('master_production_type_detail')
+        .select('id, master_parts(id, part_name, part_code, master_op_assembly(id, assembly_name, rack_placement)), part_qty')
+        .eq('header_id', typeId);
+
+    final List<MasterProductionTypeDetailModel> details = result.map((e) => MasterProductionTypeDetailModel.fromSupabase(e)).toList();
+
+    return details;
+  }
+
+  Future<void> deleteMasterProductionType({required int id}) async {
+    await _client.from('master_production_type_header').update({'deleted_at': DateTime.now().toUtc().toIso8601String()}).eq('id', id);
+  }
+
+  Future<void> insertMasterProductionType(Map<String, dynamic> excelData) async {}
 
   /* ---------------------------------- Users --------------------------------- */
   Future<UserModel> getLoggedUser({required String uuid}) async {
