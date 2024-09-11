@@ -83,256 +83,264 @@ class _UploadDailyPlanPageState extends State<UploadDailyPlanPage> {
             ),
           ],
         ),
-        body: MultiBlocListener(
-          listeners: [
-            BlocListener<DeletePlanProduksiBloc, DeletePlanProduksiState>(
-              listener: (context, state) async {
-                if (state is DeletePlanProduksiFailed) {
-                  await showDialog(
-                    context: context,
-                    builder: (_) {
-                      return AlertDialog(
-                        title: const Text('Failed to Delete Plan'),
-                        content: Text(state.message),
-                        actions: [
-                          ElevatedButton(
-                            onPressed: () {
-                              _.pop(false);
-                            },
-                            child: const Text('Dismiss'),
-                          ),
-                        ],
-                      );
-                    },
-                  );
-                  _bloc.add(FetchPlanProduksi(dateTime: selectedDate));
-                } else if (state is DeletePlanProduksiLoading) {
-                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Loading...')));
-                } else if (state is DeletePlanProduksiDone) {
-                  ScaffoldMessenger.of(context).hideCurrentSnackBar();
-                  _bloc.add(FetchPlanProduksi(dateTime: selectedDate));
-                }
-              },
+        body: SingleChildScrollView(
+          child: ConstrainedBox(
+            constraints: BoxConstraints.expand(
+              width: MediaQuery.of(context).size.width,
+              height: MediaQuery.of(context).size.height,
             ),
-            BlocListener<UploadPlanProduksiBloc, UploadPlanProduksiState>(
-              listener: (context, state) async {
-                if (state is UploadPlanProduksiFailed) {
-                  await showDialog(
-                    context: context,
-                    builder: (_) {
-                      return AlertDialog(
-                        title: const Text('Failed to Upload Plan'),
-                        content: Text(state.message),
-                        actions: [
-                          ElevatedButton(
-                            onPressed: () {
-                              _.pop(false);
-                            },
-                            child: const Text('Dismiss'),
-                          ),
-                        ],
+            child: MultiBlocListener(
+              listeners: [
+                BlocListener<DeletePlanProduksiBloc, DeletePlanProduksiState>(
+                  listener: (context, state) async {
+                    if (state is DeletePlanProduksiFailed) {
+                      await showDialog(
+                        context: context,
+                        builder: (_) {
+                          return AlertDialog(
+                            title: const Text('Failed to Delete Plan'),
+                            content: Text(state.message),
+                            actions: [
+                              ElevatedButton(
+                                onPressed: () {
+                                  _.pop(false);
+                                },
+                                child: const Text('Dismiss'),
+                              ),
+                            ],
+                          );
+                        },
                       );
-                    },
-                  );
-                  _bloc.add(FetchPlanProduksi(dateTime: selectedDate));
-                } else if (state is UploadPlanProduksiLoading) {
-                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Loading...')));
-                } else if (state is UploadPlanProduksiDone) {
-                  ScaffoldMessenger.of(context).hideCurrentSnackBar();
-                  _bloc.add(FetchPlanProduksi(dateTime: selectedDate));
-                }
-              },
-            ),
-          ],
-          child: Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: Column(
-              children: [
-                Row(
+                      _bloc.add(FetchPlanProduksi(dateTime: selectedDate));
+                    } else if (state is DeletePlanProduksiLoading) {
+                      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Loading...')));
+                    } else if (state is DeletePlanProduksiDone) {
+                      ScaffoldMessenger.of(context).hideCurrentSnackBar();
+                      _bloc.add(FetchPlanProduksi(dateTime: selectedDate));
+                    }
+                  },
+                ),
+                BlocListener<UploadPlanProduksiBloc, UploadPlanProduksiState>(
+                  listener: (context, state) async {
+                    if (state is UploadPlanProduksiFailed) {
+                      await showDialog(
+                        context: context,
+                        builder: (_) {
+                          return AlertDialog(
+                            title: const Text('Failed to Upload Plan'),
+                            content: Text(state.message),
+                            actions: [
+                              ElevatedButton(
+                                onPressed: () {
+                                  _.pop(false);
+                                },
+                                child: const Text('Dismiss'),
+                              ),
+                            ],
+                          );
+                        },
+                      );
+                      _bloc.add(FetchPlanProduksi(dateTime: selectedDate));
+                    } else if (state is UploadPlanProduksiLoading) {
+                      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Loading...')));
+                    } else if (state is UploadPlanProduksiDone) {
+                      ScaffoldMessenger.of(context).hideCurrentSnackBar();
+                      _bloc.add(FetchPlanProduksi(dateTime: selectedDate));
+                    }
+                  },
+                ),
+              ],
+              child: Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: Column(
                   children: [
-                    ElevatedButton(
-                      onPressed: () async {
-                        final newDate = await showDatePicker(
-                          context: context,
-                          firstDate: DateTime(selectedDate.year, 1, 1),
-                          lastDate: DateTime(selectedDate.year + 5, 1, 1),
-                          currentDate: selectedDate,
-                        );
-                        if (newDate != null) {
-                          setState(() {
-                            selectedDate = newDate;
-                            _bloc.add(FetchPlanProduksi(dateTime: selectedDate));
-                          });
-                        }
-                      },
-                      child: const Text('Select Date'),
-                    ),
-                    const SizedBox(
-                      width: 20,
-                    ),
-                    Text('Current Selected Date: ${selectedDateFormatter.format(selectedDate)}'),
-                    const Spacer(),
-                    BlocBuilder<ShowPlanProduksiBloc, ShowPlanProduksiState>(
-                      builder: (context, state) {
-                        if (state is ShowPlanProduksiDone) {
-                          if (state.result.isEmpty) {
-                            return Container();
-                          } else {
-                            return ElevatedButton(
-                              onPressed: () async {
-                                final shouldDelete = await showDialog<bool>(
-                                    context: context,
-                                    builder: (_) {
-                                      return AlertDialog(
-                                        title: Text('Are you sure you want to delete plan for ${selectedDateFormatter.format(selectedDate)}?'),
-                                        actions: [
-                                          ElevatedButton(
-                                            onPressed: () {
-                                              _.pop(false);
-                                            },
-                                            style: const ButtonStyle(backgroundColor: WidgetStatePropertyAll(Colors.black12)),
-                                            child: const Text('Dismiss'),
-                                          ),
-                                          ElevatedButton(
-                                            onPressed: () {
-                                              _.pop(true);
-                                            },
-                                            child: const Text('Confirm'),
-                                          )
-                                        ],
-                                      );
-                                    });
-                                if (shouldDelete != null && shouldDelete == true) {
-                                  _deleteBloc.add(DeletePlan(state.result.map((e) => e.id).toList()));
-                                }
-                              },
-                              style: const ButtonStyle(backgroundColor: WidgetStatePropertyAll(Colors.red)),
-                              child: const Text('Delete Current Plan'),
+                    Row(
+                      children: [
+                        ElevatedButton(
+                          onPressed: () async {
+                            final newDate = await showDatePicker(
+                              context: context,
+                              firstDate: DateTime(selectedDate.year, 1, 1),
+                              lastDate: DateTime(selectedDate.year + 5, 1, 1),
+                              currentDate: selectedDate,
                             );
+                            if (newDate != null) {
+                              setState(() {
+                                selectedDate = newDate;
+                                _bloc.add(FetchPlanProduksi(dateTime: selectedDate));
+                              });
+                            }
+                          },
+                          child: const Text('Select Date'),
+                        ),
+                        const SizedBox(
+                          width: 20,
+                        ),
+                        Text('Current Selected Date: ${selectedDateFormatter.format(selectedDate)}'),
+                        const Spacer(),
+                        BlocBuilder<ShowPlanProduksiBloc, ShowPlanProduksiState>(
+                          builder: (context, state) {
+                            if (state is ShowPlanProduksiDone) {
+                              if (state.result.isEmpty) {
+                                return Container();
+                              } else {
+                                return ElevatedButton(
+                                  onPressed: () async {
+                                    final shouldDelete = await showDialog<bool>(
+                                        context: context,
+                                        builder: (_) {
+                                          return AlertDialog(
+                                            title: Text('Are you sure you want to delete plan for ${selectedDateFormatter.format(selectedDate)}?'),
+                                            actions: [
+                                              ElevatedButton(
+                                                onPressed: () {
+                                                  _.pop(false);
+                                                },
+                                                style: const ButtonStyle(backgroundColor: WidgetStatePropertyAll(Colors.black12)),
+                                                child: const Text('Dismiss'),
+                                              ),
+                                              ElevatedButton(
+                                                onPressed: () {
+                                                  _.pop(true);
+                                                },
+                                                child: const Text('Confirm'),
+                                              )
+                                            ],
+                                          );
+                                        });
+                                    if (shouldDelete != null && shouldDelete == true) {
+                                      _deleteBloc.add(DeletePlan(state.result.map((e) => e.id).toList()));
+                                    }
+                                  },
+                                  style: const ButtonStyle(backgroundColor: WidgetStatePropertyAll(Colors.red)),
+                                  child: const Text('Delete Current Plan'),
+                                );
+                              }
+                            }
+                            return Container();
+                          },
+                        ),
+                      ],
+                    ),
+                    Expanded(
+                      child: BlocBuilder<ShowPlanProduksiBloc, ShowPlanProduksiState>(
+                        builder: (context, state) {
+                          if (state is ShowPlanProduksiLoading) {
+                            return const Center(
+                              child: CircularProgressIndicator(),
+                            );
+                          } else if (state is ShowPlanProduksiFailed) {
+                            return Center(child: Text('Failed to load data: ${state.message}'));
+                          } else if (state is ShowPlanProduksiDone) {
+                            if (state.result.isEmpty) {
+                              return Center(
+                                child: ElevatedButton(
+                                  onPressed: () async {
+                                    try {
+                                      FilePickerResult? pickedFile = await FilePicker.platform.pickFiles(
+                                        type: FileType.custom,
+                                        allowedExtensions: ['xlsx'],
+                                        allowMultiple: false,
+                                      );
+
+                                      if (pickedFile != null) {
+                                        var bytes = pickedFile.files.single.bytes;
+                                        var excel = Excel.decodeBytes(bytes!);
+                                        final result = processExcel(excel, selectedDate);
+
+                                        final int userId = () {
+                                          if (context.mounted) {
+                                            return (context.read<AuthBloc>().state as AuthenticatedState).user.id;
+                                          } else {
+                                            throw Exception('User Id not Found');
+                                          }
+                                        }();
+
+                                        _uploadBloc.add(
+                                          UploadPlan(
+                                            result,
+                                            userId,
+                                          ),
+                                        );
+                                      }
+                                    } catch (e) {
+                                      if (context.mounted) {
+                                        showDialog(
+                                          context: context,
+                                          builder: (_) {
+                                            return AlertDialog(
+                                              title: const Text('Failed to Upload Plan'),
+                                              content: Text(e.toString()),
+                                              actions: [
+                                                ElevatedButton(
+                                                  onPressed: () {
+                                                    _.pop(false);
+                                                  },
+                                                  child: const Text('Dismiss'),
+                                                ),
+                                              ],
+                                            );
+                                          },
+                                        );
+                                      }
+                                    }
+                                  },
+                                  child: const Text('Upload new plan'),
+                                ),
+                              );
+                            } else {
+                              return DataTable(
+                                dataRowMaxHeight: double.infinity,
+                                columns: const [
+                                  DataColumn(
+                                    label: Text('Time'),
+                                  ),
+                                  DataColumn(
+                                    label: Text('Plan'),
+                                  ),
+                                  DataColumn(
+                                    label: Text('Qty'),
+                                  )
+                                ],
+                                rows: List.generate(
+                                  state.result.length,
+                                  (index) => DataRow(
+                                    cells: [
+                                      DataCell(
+                                        Text(
+                                            '${formatter.format(state.result.elementAt(index).startTime.toLocal())} - ${formatter.format(state.result.elementAt(index).endTime.toLocal())}'),
+                                      ),
+                                      DataCell(
+                                        Padding(
+                                          padding: const EdgeInsets.all(8.0),
+                                          child: Column(
+                                            crossAxisAlignment: CrossAxisAlignment.start,
+                                            children: state.result.elementAt(index).details.map((e) => Text(e.type.typeName)).toList(),
+                                          ),
+                                        ),
+                                      ),
+                                      DataCell(
+                                        Padding(
+                                          padding: const EdgeInsets.all(8.0),
+                                          child: Column(
+                                            crossAxisAlignment: CrossAxisAlignment.start,
+                                            children: state.result.elementAt(index).details.map((e) => Text(e.qty.toString())).toList(),
+                                          ),
+                                        ),
+                                      )
+                                    ],
+                                  ),
+                                ),
+                              );
+                            }
                           }
-                        }
-                        return Container();
-                      },
+                          return Container();
+                        },
+                      ),
                     ),
                   ],
                 ),
-                Expanded(
-                  child: BlocBuilder<ShowPlanProduksiBloc, ShowPlanProduksiState>(
-                    builder: (context, state) {
-                      if (state is ShowPlanProduksiLoading) {
-                        return const Center(
-                          child: CircularProgressIndicator(),
-                        );
-                      } else if (state is ShowPlanProduksiFailed) {
-                        return Center(child: Text('Failed to load data: ${state.message}'));
-                      } else if (state is ShowPlanProduksiDone) {
-                        if (state.result.isEmpty) {
-                          return Center(
-                            child: ElevatedButton(
-                              onPressed: () async {
-                                try {
-                                  FilePickerResult? pickedFile = await FilePicker.platform.pickFiles(
-                                    type: FileType.custom,
-                                    allowedExtensions: ['xlsx'],
-                                    allowMultiple: false,
-                                  );
-
-                                  if (pickedFile != null) {
-                                    var bytes = pickedFile.files.single.bytes;
-                                    var excel = Excel.decodeBytes(bytes!);
-                                    final result = processExcel(excel, selectedDate);
-
-                                    final int userId = () {
-                                      if (context.mounted) {
-                                        return (context.read<AuthBloc>().state as AuthenticatedState).user.id;
-                                      } else {
-                                        throw Exception('User Id not Found');
-                                      }
-                                    }();
-
-                                    _uploadBloc.add(
-                                      UploadPlan(
-                                        result,
-                                        userId,
-                                      ),
-                                    );
-                                  }
-                                } catch (e) {
-                                  if (context.mounted) {
-                                    showDialog(
-                                      context: context,
-                                      builder: (_) {
-                                        return AlertDialog(
-                                          title: const Text('Failed to Upload Plan'),
-                                          content: Text(e.toString()),
-                                          actions: [
-                                            ElevatedButton(
-                                              onPressed: () {
-                                                _.pop(false);
-                                              },
-                                              child: const Text('Dismiss'),
-                                            ),
-                                          ],
-                                        );
-                                      },
-                                    );
-                                  }
-                                }
-                              },
-                              child: const Text('Upload new plan'),
-                            ),
-                          );
-                        } else {
-                          return DataTable(
-                            dataRowMaxHeight: double.infinity,
-                            columns: const [
-                              DataColumn(
-                                label: Text('Time'),
-                              ),
-                              DataColumn(
-                                label: Text('Plan'),
-                              ),
-                              DataColumn(
-                                label: Text('Qty'),
-                              )
-                            ],
-                            rows: List.generate(
-                              state.result.length,
-                              (index) => DataRow(
-                                cells: [
-                                  DataCell(
-                                    Text(
-                                        '${formatter.format(state.result.elementAt(index).startTime.toLocal())} - ${formatter.format(state.result.elementAt(index).endTime.toLocal())}'),
-                                  ),
-                                  DataCell(
-                                    Padding(
-                                      padding: const EdgeInsets.all(8.0),
-                                      child: Column(
-                                        crossAxisAlignment: CrossAxisAlignment.start,
-                                        children: state.result.elementAt(index).details.map((e) => Text(e.type.typeName)).toList(),
-                                      ),
-                                    ),
-                                  ),
-                                  DataCell(
-                                    Padding(
-                                      padding: const EdgeInsets.all(8.0),
-                                      child: Column(
-                                        crossAxisAlignment: CrossAxisAlignment.start,
-                                        children: state.result.elementAt(index).details.map((e) => Text(e.qty.toString())).toList(),
-                                      ),
-                                    ),
-                                  )
-                                ],
-                              ),
-                            ),
-                          );
-                        }
-                      }
-                      return Container();
-                    },
-                  ),
-                ),
-              ],
+              ),
             ),
           ),
         ),
