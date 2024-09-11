@@ -85,9 +85,9 @@ class _UploadDailyPlanPageState extends State<UploadDailyPlanPage> {
         body: MultiBlocListener(
           listeners: [
             BlocListener<DeletePlanProduksiBloc, DeletePlanProduksiState>(
-              listener: (context, state) {
+              listener: (context, state) async {
                 if (state is DeletePlanProduksiFailed) {
-                  showDialog(
+                  await showDialog(
                     context: context,
                     builder: (_) {
                       return AlertDialog(
@@ -104,6 +104,7 @@ class _UploadDailyPlanPageState extends State<UploadDailyPlanPage> {
                       );
                     },
                   );
+                  _bloc.add(FetchPlanProduksi(dateTime: selectedDate));
                 } else if (state is DeletePlanProduksiLoading) {
                   ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Loading...')));
                 } else if (state is DeletePlanProduksiDone) {
@@ -113,9 +114,9 @@ class _UploadDailyPlanPageState extends State<UploadDailyPlanPage> {
               },
             ),
             BlocListener<UploadPlanProduksiBloc, UploadPlanProduksiState>(
-              listener: (context, state) {
+              listener: (context, state) async {
                 if (state is UploadPlanProduksiFailed) {
-                  showDialog(
+                  await showDialog(
                     context: context,
                     builder: (_) {
                       return AlertDialog(
@@ -132,6 +133,7 @@ class _UploadDailyPlanPageState extends State<UploadDailyPlanPage> {
                       );
                     },
                   );
+                  _bloc.add(FetchPlanProduksi(dateTime: selectedDate));
                 } else if (state is UploadPlanProduksiLoading) {
                   ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Loading...')));
                 } else if (state is UploadPlanProduksiDone) {
