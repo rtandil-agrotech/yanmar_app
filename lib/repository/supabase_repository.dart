@@ -303,7 +303,7 @@ class SupabaseRepository {
     await _client.from('master_production_type_header').update({'deleted_at': DateTime.now().toUtc().toIso8601String()}).eq('id', id);
   }
 
-  Future<void> insertMasterProductionType(Map<String, dynamic> excelData) async {}
+  Future<void> insertMasterProductionType(Map<String, dynamic> excelData, String modelName) async {}
 
   /* ---------------------------------- Users --------------------------------- */
   Future<UserModel> getLoggedUser({required String uuid}) async {
