@@ -62,7 +62,7 @@ class SupabaseRepository {
         if (detailsList[i]['zone'][j] > 0) {
           final prodTypeId = await _client.from('master_production_type_header').select('id').eq('type_name', detailsList[i]['model']).limit(1);
 
-          if (prodTypeId.first['id'] == null) throw Exception("Production Type Id not found");
+          if (prodTypeId.isEmpty) throw Exception("Production Type ${detailsList[i]['model']} not found");
 
           final order = await _client.from('production_plan_detail').select('id').eq('header_id', headerIdList[j]).count(CountOption.exact);
 
@@ -274,7 +274,8 @@ class SupabaseRepository {
 
   /* ---------------------------------- Users --------------------------------- */
   Future<UserModel> getLoggedUser({required String uuid}) async {
-    final result = await _client.from('users').select('id, username, user_roles(id, role_name), uuid').isFilter('deleted_at', null).eq('uuid', uuid).limit(1);
+    final result =
+        await _client.from('users').select('id, username, user_roles(id, role_name), uuid').isFilter('deleted_at', null).eq('uuid', uuid).limit(1);
 
     final userModel = result.map((e) => UserModel.fromSupabase(e)).toList().first;
 
