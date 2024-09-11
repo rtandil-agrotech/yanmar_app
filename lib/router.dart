@@ -7,6 +7,7 @@ import 'package:yanmar_app/pages/delivery/delivery.dart';
 import 'package:yanmar_app/pages/home.dart';
 import 'package:yanmar_app/pages/login/login.dart';
 import 'package:yanmar_app/pages/upload_daily_plan/upload_daily_plan.dart';
+import 'package:yanmar_app/pages/upload_model/upload_model.dart';
 
 final router = GoRouter(
   // initialLocation: ChecklistPage.route,
@@ -31,6 +32,15 @@ final router = GoRouter(
           final userState = context.read<AuthBloc>().state;
           if (userState is UnauthenticatedState) return HomePage.route;
           if (userState is AuthenticatedState && !UploadDailyPlanPage.allowedUserRoles.contains(userState.user.role.name)) return HomePage.route;
+          return null;
+        }),
+    GoRoute(
+        path: UploadModelPage.route,
+        builder: (context, state) => const UploadModelPage(),
+        redirect: (context, state) {
+          final userState = context.read<AuthBloc>().state;
+          if (userState is UnauthenticatedState) return HomePage.route;
+          if (userState is AuthenticatedState && !UploadModelPage.allowedUserRoles.contains(userState.user.role.name)) return HomePage.route;
           return null;
         })
   ],
