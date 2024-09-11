@@ -270,12 +270,10 @@ class DeliveryTable extends StatelessWidget {
   Color? showColor(DeliveryPlanModel data, String opAssemblyName) {
     if (data.itemRequests.isNotEmpty) {
       try {
-        final itemRequestData = data.itemRequests.firstWhere((element) => element.opAssembly.name == opAssemblyName);
-        final opAssemblyId = itemRequestData.opAssembly.id;
-        final fulfilmentTime = data.details.fold(
-            0,
-            (total, listB) =>
-                total + (listB.type.fulfillment?.firstWhere((element) => element.opAssemblyId == opAssemblyId).estimatedDuration.inSeconds ?? 0));
+        final itemRequestData = data.itemRequests.firstWhere((element) => element.opAssembly.name.trim() == opAssemblyName.trim());
+        // 1 hour to fulfil order
+        const fulfilmentTime = 3600;
+
         if (itemRequestData.startTime != null) {
           if (itemRequestData.endTime != null) {
             final duration = itemRequestData.endTime!.difference(itemRequestData.startTime!).inSeconds;
@@ -294,6 +292,9 @@ class DeliveryTable extends StatelessWidget {
           }
         }
       } catch (e) {
+        print('${data.startTime.toLocal()} - ${data.endTime.toLocal()}\n');
+        print('$opAssemblyName\n');
+        print('${data.itemRequests}\n');
         return null;
       }
     }
