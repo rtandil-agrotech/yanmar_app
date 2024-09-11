@@ -7,6 +7,7 @@ import 'package:yanmar_app/pages/assembly/assembly.dart';
 import 'package:yanmar_app/pages/checklist/checklist.dart';
 import 'package:yanmar_app/pages/delivery/delivery.dart';
 import 'package:yanmar_app/pages/upload_daily_plan/upload_daily_plan.dart';
+import 'package:yanmar_app/pages/upload_model/upload_model.dart';
 
 class HomePage extends StatelessWidget {
   const HomePage({super.key});
@@ -119,6 +120,25 @@ class HomePage extends StatelessWidget {
                                   subtitle: const Text('Go to page'),
                                   onTap: () {
                                     context.go(UploadDailyPlanPage.route);
+                                  },
+                                ),
+                              );
+                            }
+                          }
+                          return Container();
+                        },
+                      ),
+                      BlocBuilder<AuthBloc, AuthState>(
+                        builder: (context, state) {
+                          if (state is AuthenticatedState) {
+                            if (UploadModelPage.allowedUserRoles.contains(state.user.role.name)) {
+                              return Card(
+                                child: ListTile(
+                                  iconColor: Colors.blue,
+                                  title: const Text('Upload Model'),
+                                  subtitle: const Text('Go to page'),
+                                  onTap: () {
+                                    context.go(UploadModelPage.route);
                                   },
                                 ),
                               );
