@@ -230,31 +230,53 @@ class _UploadDailyPlanPageState extends State<UploadDailyPlanPage> {
                           return Center(
                             child: ElevatedButton(
                               onPressed: () async {
-                                FilePickerResult? pickedFile = await FilePicker.platform.pickFiles(
-                                  type: FileType.custom,
-                                  allowedExtensions: ['xlsx'],
-                                  allowMultiple: false,
-                                );
-
-                                if (pickedFile != null) {
-                                  var bytes = pickedFile.files.single.bytes;
-                                  var excel = Excel.decodeBytes(bytes!);
-                                  final result = processExcel(excel, selectedDate);
-
-                                  final int userId = () {
-                                    if (mounted) {
-                                      return (context.read<AuthBloc>().state as AuthenticatedState).user.id;
-                                    } else {
-                                      throw Exception('User Id not Found');
-                                    }
-                                  }();
-
-                                  _uploadBloc.add(
-                                    UploadPlan(
-                                      result,
-                                      userId,
-                                    ),
+                                try {
+                                  FilePickerResult? pickedFile = await FilePicker.platform.pickFiles(
+                                    type: FileType.custom,
+                                    allowedExtensions: ['xlsx'],
+                                    allowMultiple: false,
                                   );
+
+                                  if (pickedFile != null) {
+                                    var bytes = pickedFile.files.single.bytes;
+                                    var excel = Excel.decodeBytes(bytes!);
+                                    final result = processExcel(excel, selectedDate);
+
+                                    final int userId = () {
+                                      if (context.mounted) {
+                                        return (context.read<AuthBloc>().state as AuthenticatedState).user.id;
+                                      } else {
+                                        throw Exception('User Id not Found');
+                                      }
+                                    }();
+
+                                    _uploadBloc.add(
+                                      UploadPlan(
+                                        result,
+                                        userId,
+                                      ),
+                                    );
+                                  }
+                                } catch (e) {
+                                  if (context.mounted) {
+                                    showDialog(
+                                      context: context,
+                                      builder: (_) {
+                                        return AlertDialog(
+                                          title: const Text('Failed to Upload Plan'),
+                                          content: Text(e.toString()),
+                                          actions: [
+                                            ElevatedButton(
+                                              onPressed: () {
+                                                _.pop(false);
+                                              },
+                                              child: const Text('Dismiss'),
+                                            ),
+                                          ],
+                                        );
+                                      },
+                                    );
+                                  }
                                 }
                               },
                               child: const Text('Upload new plan'),
