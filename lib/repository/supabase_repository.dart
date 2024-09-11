@@ -31,54 +31,6 @@ class SupabaseRepository {
     return planProduksiModel;
   }
 
-  Future<void> deletePlanProduksi({required List<int> id}) async {
-    for (int i = 0; i < id.length; i++) {
-      await _client.from('production_plan_detail').delete().eq('header_id', '${id[i]}');
-      await _client.from('production_plan_header').delete().eq('id', '${id[i]}');
-    }
-  }
-
-  Future<void> insertPlanProduksi(Map<String, dynamic> excelData, int createdBy) async {
-    // Loop through all headers
-    final headersList = excelData['time_slot'] as List<Map<String, dynamic>>;
-    final detailsList = excelData['plan_slot'] as List<Map<String, dynamic>>;
-
-    final headerIdList = [];
-
-    for (int i = 0; i < headersList.length; i++) {
-      final UploadPlanProduksiHeaderModel header = UploadPlanProduksiHeaderModel(
-        startTime: headersList[i]['start_time'] as DateTime,
-        endTime: headersList[i]['end_time'] as DateTime,
-        createdBy: createdBy,
-      );
-
-      final headerId = await _client.from('production_plan_header').insert(header.toJson()).select('id');
-
-      headerIdList.add(headerId.first['id']);
-    }
-
-    for (int i = 0; i < detailsList.length; i++) {
-      for (int j = 0; j < (detailsList[i]['zone'] as List).length; j++) {
-        if (detailsList[i]['zone'][j] > 0) {
-          final prodTypeId = await _client.from('master_production_type_header').select('id').eq('type_name', detailsList[i]['model']).limit(1);
-
-          if (prodTypeId.isEmpty) throw Exception("Production Type ${detailsList[i]['model']} not found");
-
-          final order = await _client.from('production_plan_detail').select('id').eq('header_id', headerIdList[j]).count(CountOption.exact);
-
-          final UploadPlanProduksiDetailModel detail = UploadPlanProduksiDetailModel(
-            headerId: headerIdList[j],
-            productionTypeId: prodTypeId.first['id'],
-            productionQty: detailsList[i]['zone'][j],
-            order: order.count + 1,
-          );
-
-          await _client.from('production_plan_detail').insert(detail.toJson());
-        }
-      }
-    }
-  }
-
   RealtimeChannel subscribeToProductionActualChanges(void Function(PostgresChangePayload) callback) {
     final subs = _client
         .channel('prod-actual')
@@ -270,6 +222,55 @@ class SupabaseRepository {
     final List<MonthlyPlanProduksiModel> monthlyPlanProduksiModel = result.map((e) => MonthlyPlanProduksiModel.fromSupabase(e, actuals)).toList();
 
     return monthlyPlanProduksiModel;
+  }
+
+  /* ----------------------- UPLOAD PLAN PRODUKSI DAILY ----------------------- */
+  Future<void> deletePlanProduksi({required List<int> id}) async {
+    for (int i = 0; i < id.length; i++) {
+      await _client.from('production_plan_detail').delete().eq('header_id', '${id[i]}');
+      await _client.from('production_plan_header').delete().eq('id', '${id[i]}');
+    }
+  }
+
+  Future<void> insertPlanProduksi(Map<String, dynamic> excelData, int createdBy) async {
+    // Loop through all headers
+    final headersList = excelData['time_slot'] as List<Map<String, dynamic>>;
+    final detailsList = excelData['plan_slot'] as List<Map<String, dynamic>>;
+
+    final headerIdList = [];
+
+    for (int i = 0; i < headersList.length; i++) {
+      final UploadPlanProduksiHeaderModel header = UploadPlanProduksiHeaderModel(
+        startTime: headersList[i]['start_time'] as DateTime,
+        endTime: headersList[i]['end_time'] as DateTime,
+        createdBy: createdBy,
+      );
+
+      final headerId = await _client.from('production_plan_header').insert(header.toJson()).select('id');
+
+      headerIdList.add(headerId.first['id']);
+    }
+
+    for (int i = 0; i < detailsList.length; i++) {
+      for (int j = 0; j < (detailsList[i]['zone'] as List).length; j++) {
+        if (detailsList[i]['zone'][j] > 0) {
+          final prodTypeId = await _client.from('master_production_type_header').select('id').eq('type_name', detailsList[i]['model']).limit(1);
+
+          if (prodTypeId.isEmpty) throw Exception("Production Type ${detailsList[i]['model']} not found");
+
+          final order = await _client.from('production_plan_detail').select('id').eq('header_id', headerIdList[j]).count(CountOption.exact);
+
+          final UploadPlanProduksiDetailModel detail = UploadPlanProduksiDetailModel(
+            headerId: headerIdList[j],
+            productionTypeId: prodTypeId.first['id'],
+            productionQty: detailsList[i]['zone'][j],
+            order: order.count + 1,
+          );
+
+          await _client.from('production_plan_detail').insert(detail.toJson());
+        }
+      }
+    }
   }
 
   /* ---------------------------------- Users --------------------------------- */
