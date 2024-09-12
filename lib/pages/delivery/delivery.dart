@@ -105,7 +105,16 @@ class _DeliveryPageState extends State<DeliveryPage> {
                   ),
                 );
               } else {
-                return Center(child: DeliveryTable(data: state.result));
+                return Center(
+                  child: ConstrainedBox(
+                    constraints: BoxConstraints.loose(Size(MediaQuery.of(context).size.width, MediaQuery.of(context).size.height)),
+                    child: InteractiveViewer(
+                      constrained: false,
+                      scaleEnabled: false,
+                      child: DeliveryTable(data: state.result),
+                    ),
+                  ),
+                );
               }
             } else if (state is DeliveryDataFetcherFailed) {
               return Center(

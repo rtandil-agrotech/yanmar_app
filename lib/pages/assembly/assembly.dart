@@ -638,6 +638,7 @@ class AssemblyTable extends StatelessWidget {
                 constraints: BoxConstraints.loose(Size(MediaQuery.of(context).size.width, 500)),
                 child: InteractiveViewer(
                   constrained: false,
+                  scaleEnabled: false,
                   child: DataTable(
                     columnSpacing: 10,
                     dataTextStyle: tableStyle,
