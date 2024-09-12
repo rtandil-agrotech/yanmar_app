@@ -634,20 +634,26 @@ class AssemblyTable extends StatelessWidget {
                 ),
               );
             } else {
-              return DataTable(
-                columnSpacing: 10,
-                dataTextStyle: tableStyle,
-                border: TableBorder.all(color: Colors.white),
-                columns: [
-                  const DataColumn(label: Text('Time')),
-                  const DataColumn(label: Text('Plan')),
-                  const DataColumn(label: Text('Qty')),
-                  ...List.generate(maxQtyInDetails, (index) => DataColumn(label: Flexible(child: Center(child: Text((index + 1).toString()))))),
-                  const DataColumn(label: Text('Total')),
-                  const DataColumn(label: Text('Actual')),
-                  const DataColumn(label: Text('Ratio')),
-                ],
-                rows: generateTable(list: state.result, maxLength: maxQtyInDetails),
+              return ConstrainedBox(
+                constraints: BoxConstraints.loose(Size(MediaQuery.of(context).size.width, 500)),
+                child: InteractiveViewer(
+                  constrained: false,
+                  child: DataTable(
+                    columnSpacing: 10,
+                    dataTextStyle: tableStyle,
+                    border: TableBorder.all(color: Colors.white),
+                    columns: [
+                      const DataColumn(label: Text('Time')),
+                      const DataColumn(label: Text('Plan')),
+                      const DataColumn(label: Text('Qty')),
+                      ...List.generate(maxQtyInDetails, (index) => DataColumn(label: Flexible(child: Center(child: Text((index + 1).toString()))))),
+                      const DataColumn(label: Text('Total')),
+                      const DataColumn(label: Text('Actual')),
+                      const DataColumn(label: Text('Ratio')),
+                    ],
+                    rows: generateTable(list: state.result, maxLength: maxQtyInDetails),
+                  ),
+                ),
               );
             }
           } else if (state is PlanProduksiDataFetcherError) {
