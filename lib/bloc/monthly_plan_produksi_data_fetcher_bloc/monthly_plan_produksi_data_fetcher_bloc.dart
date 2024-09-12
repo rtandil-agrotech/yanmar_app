@@ -10,7 +10,7 @@ part 'monthly_plan_produksi_data_fetcher_state.dart';
 class MonthlyPlanProduksiDataFetcherBloc extends Bloc<MonthlyPlanProduksiDataFetcherEvent, MonthlyPlanProduksiDataFetcherState> {
   MonthlyPlanProduksiDataFetcherBloc() : super(MonthlyPlanProduksiDataFetcherInitial()) {
     on<FetchMonthlyPlanProduksiData>((event, emit) async {
-      DateTime now = DateTime.now();
+      DateTime now = event.currentTime;
 
       final DateTime startTime = DateTime(now.year, now.month, 1);
       final DateTime endTime = DateTime(now.year, now.month + 1, 1).subtract(const Duration(seconds: 1));

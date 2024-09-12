@@ -37,7 +37,7 @@ class _AssemblyPageState extends State<AssemblyPage> {
   void initState() {
     selectedDate = DateTime.now();
     _bloc.add(FetchPlanProduksiData(currentDate: selectedDate));
-    _monthlyBloc.add(FetchMonthlyPlanProduksiData());
+    _monthlyBloc.add(FetchMonthlyPlanProduksiData(currentTime: selectedDate));
 
     _subs = _repo.subscribeToProductionActualChanges((payload) {
       _bloc.add(FetchPlanProduksiData(currentDate: selectedDate));

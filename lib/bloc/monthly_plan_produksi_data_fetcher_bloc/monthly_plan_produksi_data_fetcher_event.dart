@@ -7,4 +7,11 @@ sealed class MonthlyPlanProduksiDataFetcherEvent extends Equatable {
   List<Object> get props => [];
 }
 
-class FetchMonthlyPlanProduksiData extends MonthlyPlanProduksiDataFetcherEvent {}
+class FetchMonthlyPlanProduksiData extends MonthlyPlanProduksiDataFetcherEvent {
+  const FetchMonthlyPlanProduksiData({required this.currentTime});
+
+  final DateTime currentTime;
+
+  @override
+  List<Object> get props => [currentTime];
+}
