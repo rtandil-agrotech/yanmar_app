@@ -2,9 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:yanmar_app/bloc/auth_bloc/auth_bloc.dart' as auth_bloc;
 import 'package:yanmar_app/bloc/delivery_data_fetcher_bloc/delivery_data_fetcher_bloc.dart';
 import 'package:yanmar_app/locator.dart';
 import 'package:yanmar_app/models/delivery_model.dart';
+import 'package:yanmar_app/models/role_model.dart';
 import 'package:yanmar_app/pages/delivery/helpers/map_db_to_ui.dart';
 import 'package:yanmar_app/repository/supabase_repository.dart';
 
@@ -14,6 +16,7 @@ class DeliveryPage extends StatefulWidget {
   const DeliveryPage({super.key});
 
   static const route = '/delivery';
+  static const rolesForMonitor = [superAdminRole, monitoringRole];
 
   @override
   State<DeliveryPage> createState() => _DeliveryPageState();
@@ -23,6 +26,7 @@ class _DeliveryPageState extends State<DeliveryPage> {
   final DeliveryDataFetcherBloc _bloc = DeliveryDataFetcherBloc();
   late DateTime selectedDate;
 
+  final DateFormat selectedDateFormatter = DateFormat('dd/MM/yyyy');
   final _repo = locator.get<SupabaseRepository>();
   late final RealtimeChannel _subsItem;
   late final RealtimeChannel _subsChecklist;
@@ -32,10 +36,14 @@ class _DeliveryPageState extends State<DeliveryPage> {
     selectedDate = DateTime.now();
     _bloc.add(FetchDeliveryData(currentDate: selectedDate));
     _subsItem = _repo.subscribeToItemRequestChanges((payload) {
-      _bloc.add(FetchDeliveryData(currentDate: selectedDate));
+      if (selectedDate.day == DateTime.now().day && selectedDate.month == DateTime.now().month && selectedDate.year == DateTime.now().year) {
+        _bloc.add(FetchDeliveryData(currentDate: selectedDate));
+      }
     });
     _subsChecklist = _repo.subscribeToChecklistChanges((payload) {
-      _bloc.add(FetchDeliveryData(currentDate: selectedDate));
+      if (selectedDate.day == DateTime.now().day && selectedDate.month == DateTime.now().month && selectedDate.year == DateTime.now().year) {
+        _bloc.add(FetchDeliveryData(currentDate: selectedDate));
+      }
     });
     super.initState();
   }
@@ -105,15 +113,56 @@ class _DeliveryPageState extends State<DeliveryPage> {
                   ),
                 );
               } else {
-                return Center(
-                  child: ConstrainedBox(
-                    constraints: BoxConstraints.loose(Size(MediaQuery.of(context).size.width, MediaQuery.of(context).size.height)),
-                    child: InteractiveViewer(
-                      constrained: false,
-                      scaleEnabled: false,
-                      child: DeliveryTable(data: state.result),
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    BlocBuilder<auth_bloc.AuthBloc, auth_bloc.AuthState>(
+                      builder: (context, state) {
+                        if (state is auth_bloc.AuthenticatedState && DeliveryPage.rolesForMonitor.contains(state.user.role.name)) {
+                          return Padding(
+                            padding: const EdgeInsets.all(10.0),
+                            child: Row(
+                              children: [
+                                ElevatedButton(
+                                  onPressed: () async {
+                                    final newDate = await showDatePicker(
+                                      context: context,
+                                      firstDate: DateTime(selectedDate.year, 1, 1),
+                                      lastDate: DateTime(selectedDate.year + 5, 1, 1),
+                                      currentDate: selectedDate,
+                                    );
+                                    if (newDate != null) {
+                                      setState(() {
+                                        selectedDate = newDate;
+                                        _bloc.add(FetchDeliveryData(currentDate: selectedDate));
+                                      });
+                                    }
+                                  },
+                                  child: const Text('Select Date'),
+                                ),
+                                const SizedBox(
+                                  width: 20,
+                                ),
+                                Text('Current Selected Date: ${selectedDateFormatter.format(selectedDate)}'),
+                              ],
+                            ),
+                          );
+                        }
+                        return Container();
+                      },
                     ),
-                  ),
+                    ConstrainedBox(
+                      constraints: BoxConstraints.loose(Size(MediaQuery.of(context).size.width, MediaQuery.of(context).size.height - 144)),
+                      child: InteractiveViewer(
+                        constrained: false,
+                        scaleEnabled: false,
+                        child: ConstrainedBox(
+                            constraints:
+                                BoxConstraints(minHeight: MediaQuery.of(context).size.height - 144, minWidth: MediaQuery.of(context).size.width),
+                            child: DeliveryTable(data: state.result)),
+                      ),
+                    ),
+                  ],
                 );
               }
             } else if (state is DeliveryDataFetcherFailed) {

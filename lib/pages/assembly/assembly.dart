@@ -5,12 +5,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:percent_indicator/percent_indicator.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:yanmar_app/bloc/auth_bloc/auth_bloc.dart' as auth_bloc;
 import 'package:yanmar_app/bloc/monthly_plan_produksi_data_fetcher_bloc/monthly_plan_produksi_data_fetcher_bloc.dart';
 import 'package:yanmar_app/bloc/plan_produksi_data_fetcher/plan_produksi_data_fetcher_bloc.dart';
 import 'package:intl/intl.dart';
 import 'package:yanmar_app/locator.dart';
 import 'package:yanmar_app/models/plan_produksi_model.dart';
 import 'package:yanmar_app/models/production_type_model.dart';
+import 'package:yanmar_app/models/role_model.dart';
 import 'package:yanmar_app/repository/supabase_repository.dart';
 
 const TextStyle tableStyle = TextStyle(fontSize: 11, color: Colors.white, overflow: TextOverflow.ellipsis);
@@ -20,6 +22,7 @@ class AssemblyPage extends StatefulWidget {
   const AssemblyPage({super.key});
 
   static const route = '/assembly';
+  static const rolesForMonitor = [superAdminRole, monitoringRole];
 
   @override
   State<AssemblyPage> createState() => _AssemblyPageState();
@@ -29,6 +32,8 @@ class _AssemblyPageState extends State<AssemblyPage> {
   final PlanProduksiDataFetcherBloc _bloc = PlanProduksiDataFetcherBloc();
   final MonthlyPlanProduksiDataFetcherBloc _monthlyBloc = MonthlyPlanProduksiDataFetcherBloc();
   late DateTime selectedDate;
+
+  final DateFormat selectedDateFormatter = DateFormat('dd/MM/yyyy');
 
   final _repo = locator.get<SupabaseRepository>();
   late final RealtimeChannel _subs;
@@ -40,7 +45,10 @@ class _AssemblyPageState extends State<AssemblyPage> {
     _monthlyBloc.add(FetchMonthlyPlanProduksiData(currentTime: selectedDate));
 
     _subs = _repo.subscribeToProductionActualChanges((payload) {
-      _bloc.add(FetchPlanProduksiData(currentDate: selectedDate));
+      // Only run in selectedDate is in the same day month year as DateTime.now()
+      if (selectedDate.day == DateTime.now().day && selectedDate.month == DateTime.now().month && selectedDate.year == DateTime.now().year) {
+        _bloc.add(FetchPlanProduksiData(currentDate: selectedDate));
+      }
     });
 
     super.initState();
@@ -128,6 +136,41 @@ class _AssemblyPageState extends State<AssemblyPage> {
         ),
         body: Column(
           children: [
+            BlocBuilder<auth_bloc.AuthBloc, auth_bloc.AuthState>(
+              builder: (context, state) {
+                if (state is auth_bloc.AuthenticatedState && AssemblyPage.rolesForMonitor.contains(state.user.role.name)) {
+                  return Padding(
+                    padding: const EdgeInsets.all(10.0),
+                    child: Row(
+                      children: [
+                        ElevatedButton(
+                          onPressed: () async {
+                            final newDate = await showDatePicker(
+                              context: context,
+                              firstDate: DateTime(selectedDate.year, 1, 1),
+                              lastDate: DateTime(selectedDate.year + 5, 1, 1),
+                              currentDate: selectedDate,
+                            );
+                            if (newDate != null) {
+                              setState(() {
+                                selectedDate = newDate;
+                                _bloc.add(FetchPlanProduksiData(currentDate: selectedDate));
+                              });
+                            }
+                          },
+                          child: const Text('Select Date'),
+                        ),
+                        const SizedBox(
+                          width: 20,
+                        ),
+                        Text('Current Selected Date: ${selectedDateFormatter.format(selectedDate)}'),
+                      ],
+                    ),
+                  );
+                }
+                return Container();
+              },
+            ),
             const Center(child: AssemblyTable()),
             ConstrainedBox(
               constraints: BoxConstraints.loose(const Size.fromHeight(100)),
@@ -639,20 +682,27 @@ class AssemblyTable extends StatelessWidget {
                 child: InteractiveViewer(
                   constrained: false,
                   scaleEnabled: false,
-                  child: DataTable(
-                    columnSpacing: 10,
-                    dataTextStyle: tableStyle,
-                    border: TableBorder.all(color: Colors.white),
-                    columns: [
-                      const DataColumn(label: Text('Time')),
-                      const DataColumn(label: Text('Plan')),
-                      const DataColumn(label: Text('Qty')),
-                      ...List.generate(maxQtyInDetails, (index) => DataColumn(label: Flexible(child: Center(child: Text((index + 1).toString()))))),
-                      const DataColumn(label: Text('Total')),
-                      const DataColumn(label: Text('Actual')),
-                      const DataColumn(label: Text('Ratio')),
-                    ],
-                    rows: generateTable(list: state.result, maxLength: maxQtyInDetails),
+                  child: ConstrainedBox(
+                    constraints: BoxConstraints(minHeight: MediaQuery.of(context).size.height, minWidth: MediaQuery.of(context).size.width),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 10.0),
+                      child: DataTable(
+                        columnSpacing: 10,
+                        dataTextStyle: tableStyle,
+                        border: TableBorder.all(color: Colors.white),
+                        columns: [
+                          const DataColumn(label: Text('Time')),
+                          const DataColumn(label: Text('Plan')),
+                          const DataColumn(label: Text('Qty')),
+                          ...List.generate(
+                              maxQtyInDetails, (index) => DataColumn(label: Flexible(child: Center(child: Text((index + 1).toString()))))),
+                          const DataColumn(label: Text('Total')),
+                          const DataColumn(label: Text('Actual')),
+                          const DataColumn(label: Text('Ratio')),
+                        ],
+                        rows: generateTable(list: state.result, maxLength: maxQtyInDetails),
+                      ),
+                    ),
                   ),
                 ),
               );
