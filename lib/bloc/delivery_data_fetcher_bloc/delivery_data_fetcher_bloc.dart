@@ -1,6 +1,5 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:equatable/equatable.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:yanmar_app/locator.dart';
 import 'package:yanmar_app/models/delivery_model.dart';
 import 'package:yanmar_app/repository/supabase_repository.dart';
@@ -10,12 +9,6 @@ part 'delivery_data_fetcher_state.dart';
 
 class DeliveryDataFetcherBloc extends Bloc<DeliveryDataFetcherEvent, DeliveryDataFetcherState> {
   DeliveryDataFetcherBloc() : super(DeliveryDataFetcherInitial()) {
-    subs1 = _repo.subscribeToItemRequestChanges((payload) {
-      add(FetchDeliveryData());
-    });
-
-    subs2 = _repo.subscribeToChecklistChanges(((p0) => add(FetchDeliveryData())));
-
     on<FetchDeliveryData>((event, emit) async {
       DateTime now = DateTime.now();
 
@@ -36,13 +29,4 @@ class DeliveryDataFetcherBloc extends Bloc<DeliveryDataFetcherEvent, DeliveryDat
   }
 
   final _repo = locator.get<SupabaseRepository>();
-  late final RealtimeChannel subs1;
-  late final RealtimeChannel subs2;
-
-  @override
-  Future<void> close() {
-    _repo.unsubscribe(subs1);
-    _repo.unsubscribe(subs2);
-    return super.close();
-  }
 }

@@ -8,5 +8,10 @@ sealed class PlanProduksiDataFetcherEvent extends Equatable {
 }
 
 final class FetchPlanProduksiData extends PlanProduksiDataFetcherEvent {
-  const FetchPlanProduksiData();
+  const FetchPlanProduksiData({required this.currentDate});
+
+  final DateTime currentDate;
+
+  @override
+  List<Object?> get props => [currentDate];
 }

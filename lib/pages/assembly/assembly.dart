@@ -4,11 +4,14 @@ import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:percent_indicator/percent_indicator.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:yanmar_app/bloc/monthly_plan_produksi_data_fetcher_bloc/monthly_plan_produksi_data_fetcher_bloc.dart';
 import 'package:yanmar_app/bloc/plan_produksi_data_fetcher/plan_produksi_data_fetcher_bloc.dart';
 import 'package:intl/intl.dart';
+import 'package:yanmar_app/locator.dart';
 import 'package:yanmar_app/models/plan_produksi_model.dart';
 import 'package:yanmar_app/models/production_type_model.dart';
+import 'package:yanmar_app/repository/supabase_repository.dart';
 
 const TextStyle tableStyle = TextStyle(fontSize: 11, color: Colors.white, overflow: TextOverflow.ellipsis);
 const TextStyle lateStyle = TextStyle(color: Colors.red, fontWeight: FontWeight.bold);
@@ -25,18 +28,29 @@ class AssemblyPage extends StatefulWidget {
 class _AssemblyPageState extends State<AssemblyPage> {
   final PlanProduksiDataFetcherBloc _bloc = PlanProduksiDataFetcherBloc();
   final MonthlyPlanProduksiDataFetcherBloc _monthlyBloc = MonthlyPlanProduksiDataFetcherBloc();
+  late DateTime selectedDate;
+
+  final _repo = locator.get<SupabaseRepository>();
+  late final RealtimeChannel _subs;
 
   @override
   void initState() {
-    _bloc.add(const FetchPlanProduksiData());
+    selectedDate = DateTime.now();
+    _bloc.add(FetchPlanProduksiData(currentDate: selectedDate));
     _monthlyBloc.add(FetchMonthlyPlanProduksiData());
+
+    _subs = _repo.subscribeToProductionActualChanges((payload) {
+      _bloc.add(FetchPlanProduksiData(currentDate: selectedDate));
+    });
+
     super.initState();
   }
 
   @override
-  void dispose() {
+  Future<void> dispose() async {
     _bloc.close();
     _monthlyBloc.close();
+    await _repo.unsubscribe(_subs);
     super.dispose();
   }
 

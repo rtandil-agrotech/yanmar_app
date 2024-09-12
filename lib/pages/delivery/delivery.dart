@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:yanmar_app/bloc/delivery_data_fetcher_bloc/delivery_data_fetcher_bloc.dart';
+import 'package:yanmar_app/locator.dart';
 import 'package:yanmar_app/models/delivery_model.dart';
 import 'package:yanmar_app/pages/delivery/helpers/map_db_to_ui.dart';
+import 'package:yanmar_app/repository/supabase_repository.dart';
 
 import 'constants/table_header_names.dart';
 
@@ -18,16 +21,30 @@ class DeliveryPage extends StatefulWidget {
 
 class _DeliveryPageState extends State<DeliveryPage> {
   final DeliveryDataFetcherBloc _bloc = DeliveryDataFetcherBloc();
+  late DateTime selectedDate;
+
+  final _repo = locator.get<SupabaseRepository>();
+  late final RealtimeChannel _subsItem;
+  late final RealtimeChannel _subsChecklist;
 
   @override
   void initState() {
-    _bloc.add(FetchDeliveryData());
+    selectedDate = DateTime.now();
+    _bloc.add(FetchDeliveryData(currentDate: selectedDate));
+    _subsItem = _repo.subscribeToItemRequestChanges((payload) {
+      _bloc.add(FetchDeliveryData(currentDate: selectedDate));
+    });
+    _subsChecklist = _repo.subscribeToChecklistChanges((payload) {
+      _bloc.add(FetchDeliveryData(currentDate: selectedDate));
+    });
     super.initState();
   }
 
   @override
   void dispose() {
     _bloc.close();
+    _repo.unsubscribe(_subsItem);
+    _repo.unsubscribe(_subsChecklist);
     super.dispose();
   }
 

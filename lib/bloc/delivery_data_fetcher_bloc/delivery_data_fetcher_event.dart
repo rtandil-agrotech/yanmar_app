@@ -7,4 +7,11 @@ sealed class DeliveryDataFetcherEvent extends Equatable {
   List<Object> get props => [];
 }
 
-final class FetchDeliveryData extends DeliveryDataFetcherEvent {}
+final class FetchDeliveryData extends DeliveryDataFetcherEvent {
+  const FetchDeliveryData({required this.currentDate});
+
+  final DateTime currentDate;
+
+  @override
+  List<Object> get props => [currentDate];
+}
