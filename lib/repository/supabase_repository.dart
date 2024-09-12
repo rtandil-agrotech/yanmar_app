@@ -256,7 +256,12 @@ class SupabaseRepository {
     for (int i = 0; i < detailsList.length; i++) {
       for (int j = 0; j < (detailsList[i]['zone'] as List).length; j++) {
         if (detailsList[i]['zone'][j] > 0) {
-          final prodTypeId = await _client.from('master_production_type_header').select('id').eq('type_name', detailsList[i]['model']).limit(1);
+          final prodTypeId = await _client
+              .from('master_production_type_header')
+              .select('id')
+              .isFilter('deleted_at', null)
+              .eq('type_name', detailsList[i]['model'])
+              .limit(1);
 
           if (prodTypeId.isEmpty) throw Exception("Production Type ${detailsList[i]['model']} not found");
 
@@ -272,6 +277,40 @@ class SupabaseRepository {
           await _client.from('production_plan_detail').insert(detail.toJson());
         }
       }
+    }
+  }
+
+  /* ---------------------- UPLOAD PLAN PRODUKSI MONTHLY ---------------------- */
+  Future<void> deleteMonthlyPlanProduksi({required int id}) async {
+    await _client.from('monthly_production_plan_detail').delete().eq('header_id', '$id');
+    await _client.from('monthly_production_plan_header').delete().eq('id', '$id');
+  }
+
+  Future<void> uploadMonthlyPlanProduksi(List<Map<String, dynamic>> excelData, DateTime startTime, DateTime endTime, int createdBy) async {
+    final headerId = await _client.from('monthly_production_plan_header').insert({
+      'start_time': startTime.toIso8601String(),
+      'end_time': endTime.toIso8601String(),
+      'created_by': createdBy,
+    }).select('id');
+
+    for (int i = 0; i < excelData.length; i++) {
+      final prodTypeId = await _client
+          .from('master_production_type_header')
+          .select('id')
+          .isFilter('deleted_at', null)
+          .eq('type_name', excelData[i].keys.first)
+          .limit(1);
+
+      if (prodTypeId.isEmpty) throw Exception("Production Type ${excelData[i].keys.first} not found");
+
+      final order = await _client.from('monthly_production_plan_detail').select('id').eq('header_id', headerId.first['id']).count(CountOption.exact);
+
+      await _client.from('monthly_production_plan_detail').insert({
+        'header_id': headerId.first['id'],
+        'production_type_id': prodTypeId.first['id'],
+        'production_qty': excelData[i].values.first,
+        'order': order.count + 1
+      });
     }
   }
 

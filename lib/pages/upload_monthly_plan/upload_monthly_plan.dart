@@ -7,35 +7,34 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:yanmar_app/bloc/auth_bloc/auth_bloc.dart';
-import 'package:yanmar_app/bloc/delete_plan_produksi_bloc/delete_plan_produksi_bloc.dart';
-import 'package:yanmar_app/bloc/show_plan_produksi_bloc/show_plan_produksi_bloc.dart';
-import 'package:yanmar_app/bloc/upload_plan_produksi_bloc/upload_plan_produksi_bloc.dart';
+import 'package:yanmar_app/bloc/delete_monthly_plan_produksi_bloc/delete_monthly_plan_produksi_bloc.dart';
+import 'package:yanmar_app/bloc/monthly_plan_produksi_data_fetcher_bloc/monthly_plan_produksi_data_fetcher_bloc.dart';
+import 'package:yanmar_app/bloc/upload_monthly_plan_produksi_bloc/upload_monthly_plan_produksi_bloc.dart';
 import 'package:yanmar_app/models/role_model.dart';
+import 'package:yanmar_app/pages/upload_monthly_plan/helper/process_monthly_plan_excel.dart';
 
-import 'helper/process_daily_plan_excel.dart';
-
-class UploadDailyPlanPage extends StatefulWidget {
-  const UploadDailyPlanPage({super.key});
+class UploadMonthlyPlanPage extends StatefulWidget {
+  const UploadMonthlyPlanPage({super.key});
 
   static const allowedUserRoles = [superAdminRole, supervisorRole];
-  static const route = '/upload-daily-plan';
+  static const route = '/upload-monthly-plan';
 
   @override
-  State<UploadDailyPlanPage> createState() => _UploadDailyPlanPageState();
+  State<UploadMonthlyPlanPage> createState() => _UploadMonthlyPlanPageState();
 }
 
-class _UploadDailyPlanPageState extends State<UploadDailyPlanPage> {
+class _UploadMonthlyPlanPageState extends State<UploadMonthlyPlanPage> {
   DateTime selectedDate = DateTime.now();
-  final _bloc = ShowPlanProduksiBloc();
-  final _deleteBloc = DeletePlanProduksiBloc();
-  final _uploadBloc = UploadPlanProduksiBloc();
+  final _bloc = MonthlyPlanProduksiDataFetcherBloc();
+  final _deleteBloc = DeleteMonthlyPlanProduksiBloc();
+  final _uploadBloc = UploadMonthlyPlanProduksiBloc();
 
   final DateFormat formatter = DateFormat('HH:mm');
-  final DateFormat selectedDateFormatter = DateFormat('dd/MM/yyyy');
+  final DateFormat selectedDateFormatter = DateFormat('MMMM yyyy');
 
   @override
   void initState() {
-    _bloc.add(FetchPlanProduksi(dateTime: selectedDate));
+    _bloc.add(FetchMonthlyPlanProduksiData(currentTime: selectedDate));
     super.initState();
   }
 
@@ -55,17 +54,17 @@ class _UploadDailyPlanPageState extends State<UploadDailyPlanPage> {
       ],
       child: Scaffold(
         appBar: AppBar(
-          title: const Text('Upload Daily Plan'),
+          title: const Text('Upload Monthly Plan'),
           centerTitle: true,
           actions: [
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 8.0),
               child: TextButton(
                 onPressed: () async {
-                  final ByteData data = await rootBundle.load('assets/template_excel/Template Upload Daily Plan.xlsx');
+                  final ByteData data = await rootBundle.load('assets/template_excel/Template Upload Monthly Plan.xlsx');
                   Uint8List fileData = data.buffer.asUint8List();
 
-                  String fileName = 'Template Upload Daily Plan';
+                  String fileName = 'Template Upload Monthly Plan';
                   MimeType mimeType = MimeType.custom;
 
                   await FileSaver.instance.saveFile(
@@ -89,15 +88,15 @@ class _UploadDailyPlanPageState extends State<UploadDailyPlanPage> {
             ),
             child: MultiBlocListener(
               listeners: [
-                BlocListener<DeletePlanProduksiBloc, DeletePlanProduksiState>(
+                BlocListener<DeleteMonthlyPlanProduksiBloc, DeleteMonthlyPlanProduksiState>(
                   listener: (context, state) async {
-                    if (state is DeletePlanProduksiFailed) {
+                    if (state is DeleteMonthlyPlanProduksiFailed) {
                       await showDialog(
                         context: context,
                         builder: (_) {
                           return AlertDialog(
                             title: const Text('Failed to Delete Plan'),
-                            content: Text(state.message),
+                            content: Text(state.error),
                             actions: [
                               ElevatedButton(
                                 onPressed: () {
@@ -109,24 +108,24 @@ class _UploadDailyPlanPageState extends State<UploadDailyPlanPage> {
                           );
                         },
                       );
-                      _bloc.add(FetchPlanProduksi(dateTime: selectedDate));
-                    } else if (state is DeletePlanProduksiLoading) {
+                      _bloc.add(FetchMonthlyPlanProduksiData(currentTime: selectedDate));
+                    } else if (state is DeleteMonthlyPlanProduksiLoading) {
                       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Loading...')));
-                    } else if (state is DeletePlanProduksiDone) {
+                    } else if (state is DeleteMonthlyPlanProduksiDone) {
                       ScaffoldMessenger.of(context).hideCurrentSnackBar();
-                      _bloc.add(FetchPlanProduksi(dateTime: selectedDate));
+                      _bloc.add(FetchMonthlyPlanProduksiData(currentTime: selectedDate));
                     }
                   },
                 ),
-                BlocListener<UploadPlanProduksiBloc, UploadPlanProduksiState>(
+                BlocListener<UploadMonthlyPlanProduksiBloc, UploadMonthlyPlanProduksiState>(
                   listener: (context, state) async {
-                    if (state is UploadPlanProduksiFailed) {
+                    if (state is UploadMonthlyPlanProduksiFailed) {
                       await showDialog(
                         context: context,
                         builder: (_) {
                           return AlertDialog(
                             title: const Text('Failed to Upload Plan'),
-                            content: Text(state.message),
+                            content: Text(state.error),
                             actions: [
                               ElevatedButton(
                                 onPressed: () {
@@ -138,12 +137,12 @@ class _UploadDailyPlanPageState extends State<UploadDailyPlanPage> {
                           );
                         },
                       );
-                      _bloc.add(FetchPlanProduksi(dateTime: selectedDate));
-                    } else if (state is UploadPlanProduksiLoading) {
+                      _bloc.add(FetchMonthlyPlanProduksiData(currentTime: selectedDate));
+                    } else if (state is UploadMonthlyPlanProduksiLoading) {
                       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Loading...')));
-                    } else if (state is UploadPlanProduksiDone) {
+                    } else if (state is UploadMonthlyPlanProduksiDone) {
                       ScaffoldMessenger.of(context).hideCurrentSnackBar();
-                      _bloc.add(FetchPlanProduksi(dateTime: selectedDate));
+                      _bloc.add(FetchMonthlyPlanProduksiData(currentTime: selectedDate));
                     }
                   },
                 ),
@@ -165,7 +164,7 @@ class _UploadDailyPlanPageState extends State<UploadDailyPlanPage> {
                             if (newDate != null) {
                               setState(() {
                                 selectedDate = newDate;
-                                _bloc.add(FetchPlanProduksi(dateTime: selectedDate));
+                                _bloc.add(FetchMonthlyPlanProduksiData(currentTime: selectedDate));
                               });
                             }
                           },
@@ -176,9 +175,9 @@ class _UploadDailyPlanPageState extends State<UploadDailyPlanPage> {
                         ),
                         Text('Current Selected Date: ${selectedDateFormatter.format(selectedDate)}'),
                         const Spacer(),
-                        BlocBuilder<ShowPlanProduksiBloc, ShowPlanProduksiState>(
+                        BlocBuilder<MonthlyPlanProduksiDataFetcherBloc, MonthlyPlanProduksiDataFetcherState>(
                           builder: (context, state) {
-                            if (state is ShowPlanProduksiDone) {
+                            if (state is MonthlyPlanProduksiDataFetcherDone) {
                               if (state.result.isEmpty) {
                                 return Container();
                               } else {
@@ -207,7 +206,7 @@ class _UploadDailyPlanPageState extends State<UploadDailyPlanPage> {
                                           );
                                         });
                                     if (shouldDelete != null && shouldDelete == true) {
-                                      _deleteBloc.add(DeletePlan(state.result.map((e) => e.id).toList()));
+                                      _deleteBloc.add(DeletePlan(state.result.first.id));
                                     }
                                   },
                                   style: const ButtonStyle(backgroundColor: WidgetStatePropertyAll(Colors.red)),
@@ -221,15 +220,15 @@ class _UploadDailyPlanPageState extends State<UploadDailyPlanPage> {
                       ],
                     ),
                     Expanded(
-                      child: BlocBuilder<ShowPlanProduksiBloc, ShowPlanProduksiState>(
+                      child: BlocBuilder<MonthlyPlanProduksiDataFetcherBloc, MonthlyPlanProduksiDataFetcherState>(
                         builder: (context, state) {
-                          if (state is ShowPlanProduksiLoading) {
+                          if (state is MonthlyPlanProduksiDataFetcherLoading) {
                             return const Center(
                               child: CircularProgressIndicator(),
                             );
-                          } else if (state is ShowPlanProduksiFailed) {
+                          } else if (state is MonthlyPlanProduksiDataFetcherFailed) {
                             return Center(child: Text('Failed to load data: ${state.message}'));
-                          } else if (state is ShowPlanProduksiDone) {
+                          } else if (state is MonthlyPlanProduksiDataFetcherDone) {
                             if (state.result.isEmpty) {
                               return Center(
                                 child: ElevatedButton(
@@ -244,7 +243,7 @@ class _UploadDailyPlanPageState extends State<UploadDailyPlanPage> {
                                       if (pickedFile != null) {
                                         var bytes = pickedFile.files.single.bytes;
                                         var excel = Excel.decodeBytes(bytes!);
-                                        final result = processExcel(excel, selectedDate);
+                                        final result = processExcel(excel);
 
                                         final int userId = () {
                                           if (context.mounted) {
@@ -255,10 +254,7 @@ class _UploadDailyPlanPageState extends State<UploadDailyPlanPage> {
                                         }();
 
                                         _uploadBloc.add(
-                                          UploadPlan(
-                                            result,
-                                            userId,
-                                          ),
+                                          UploadPlan(result, userId, selectedDate),
                                         );
                                       }
                                     } catch (e) {
@@ -287,46 +283,35 @@ class _UploadDailyPlanPageState extends State<UploadDailyPlanPage> {
                                 ),
                               );
                             } else {
-                              return DataTable(
-                                dataRowMaxHeight: double.infinity,
-                                columns: const [
-                                  DataColumn(
-                                    label: Text('Time'),
-                                  ),
-                                  DataColumn(
-                                    label: Text('Plan'),
-                                  ),
-                                  DataColumn(
-                                    label: Text('Qty'),
-                                  )
-                                ],
-                                rows: List.generate(
-                                  state.result.length,
-                                  (index) => DataRow(
-                                    cells: [
-                                      DataCell(
-                                        Text(
-                                            '${formatter.format(state.result.elementAt(index).startTime.toLocal())} - ${formatter.format(state.result.elementAt(index).endTime.toLocal())}'),
-                                      ),
-                                      DataCell(
-                                        Padding(
-                                          padding: const EdgeInsets.all(8.0),
-                                          child: Column(
-                                            crossAxisAlignment: CrossAxisAlignment.start,
-                                            children: state.result.elementAt(index).details.map((e) => Text(e.type.typeName)).toList(),
+                              return SingleChildScrollView(
+                                child: DataTable(
+                                  dataRowMaxHeight: double.infinity,
+                                  columns: const [
+                                    DataColumn(
+                                      label: Text('Plan'),
+                                    ),
+                                    DataColumn(
+                                      label: Text('Qty'),
+                                    )
+                                  ],
+                                  rows: List.generate(
+                                    state.result.isNotEmpty ? state.result.first.details.length : 0,
+                                    (index) => DataRow(
+                                      cells: [
+                                        DataCell(
+                                          Padding(
+                                            padding: const EdgeInsets.all(8.0),
+                                            child: Text(state.result.first.details[index].type.typeName),
                                           ),
                                         ),
-                                      ),
-                                      DataCell(
-                                        Padding(
-                                          padding: const EdgeInsets.all(8.0),
-                                          child: Column(
-                                            crossAxisAlignment: CrossAxisAlignment.start,
-                                            children: state.result.elementAt(index).details.map((e) => Text(e.qty.toString())).toList(),
+                                        DataCell(
+                                          Padding(
+                                            padding: const EdgeInsets.all(8.0),
+                                            child: Text(state.result.first.details[index].qty.toString()),
                                           ),
-                                        ),
-                                      )
-                                    ],
+                                        )
+                                      ],
+                                    ),
                                   ),
                                 ),
                               );
