@@ -69,18 +69,19 @@ class PartsModel extends Equatable {
   final String partCode;
   final String partName;
   final OpAssemblyModel opAssemblyModel;
+  final String locator;
 
-  const PartsModel({required this.id, required this.partCode, required this.partName, required this.opAssemblyModel});
+  const PartsModel({required this.id, required this.partCode, required this.partName, required this.opAssemblyModel, required this.locator});
 
   factory PartsModel.fromSupabase(Map<String, dynamic> json) {
     return PartsModel(
-      id: json['id'],
-      partCode: json['part_code'],
-      partName: json['part_name'],
-      opAssemblyModel: OpAssemblyModel.fromSupabase(
-        json['master_op_assembly'],
-      ),
-    );
+        id: json['id'],
+        partCode: json['part_code'],
+        partName: json['part_name'],
+        opAssemblyModel: OpAssemblyModel.fromSupabase(
+          json['master_op_assembly'],
+        ),
+        locator: json['locator']);
   }
 
   @override
@@ -89,5 +90,6 @@ class PartsModel extends Equatable {
         partCode,
         partName,
         opAssemblyModel,
+        locator,
       ];
 }

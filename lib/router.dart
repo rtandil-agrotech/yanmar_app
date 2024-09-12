@@ -8,6 +8,7 @@ import 'package:yanmar_app/pages/home.dart';
 import 'package:yanmar_app/pages/login/login.dart';
 import 'package:yanmar_app/pages/upload_daily_plan/upload_daily_plan.dart';
 import 'package:yanmar_app/pages/upload_model/upload_model.dart';
+import 'package:yanmar_app/pages/upload_model_detail/upload_model_detail.dart';
 
 final router = GoRouter(
   // initialLocation: ChecklistPage.route,
@@ -36,6 +37,9 @@ final router = GoRouter(
         }),
     GoRoute(
         path: UploadModelPage.route,
+        routes: [
+          GoRoute(path: ':id', builder: (context, state) => UploadModelDetailPage(id: int.tryParse(state.pathParameters['id'] ?? '0') ?? 0)),
+        ],
         builder: (context, state) => const UploadModelPage(),
         redirect: (context, state) {
           final userState = context.read<AuthBloc>().state;

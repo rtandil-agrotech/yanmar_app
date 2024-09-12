@@ -365,7 +365,9 @@ class _UploadModelPageState extends State<UploadModelPage> {
 
                                   return Card(
                                     child: ListTile(
-                                      onTap: () {},
+                                      onTap: () {
+                                        context.go('${UploadModelPage.route}/${state.productionModels[i].id}');
+                                      },
                                       title: Text(state.productionModels[i].typeName),
                                       trailing: Text(state.productionModels[i].estimatedProductionTime.toString().split('.').first),
                                       subtitle: Text('created: ${dateFormatter.format(state.productionModels[i].createdAt.toLocal())}'),

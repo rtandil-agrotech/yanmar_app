@@ -294,15 +294,24 @@ class SupabaseRepository {
     };
   }
 
-  Future<List<MasterProductionTypeDetailModel>> getMasterProductionTypeDetail({required int typeId}) async {
+  Future<Map<String, dynamic>> getMasterProductionTypeDetail({required int typeId}) async {
+    final header = await _client
+        .from('master_production_type_header')
+        .select('id, type_name, estimated_production_duration, created_at')
+        .eq('id', typeId)
+        .limit(1)
+        .single();
+
     final result = await _client
         .from('master_production_type_detail')
-        .select('id, master_parts(id, part_name, part_code, master_op_assembly(id, assembly_name, rack_placement)), part_qty')
+        .select('id, master_parts(id, part_name, part_code, locator, master_op_assembly(id, assembly_name, rack_placement)), part_qty')
         .eq('header_id', typeId);
 
     final List<MasterProductionTypeDetailModel> details = result.map((e) => MasterProductionTypeDetailModel.fromSupabase(e)).toList();
 
-    return details;
+    final MasterProductionTypeModel model = MasterProductionTypeModel.fromSupabase(header);
+
+    return {'data': details, 'header': model};
   }
 
   Future<void> deleteMasterProductionType({required int id}) async {
@@ -315,6 +324,7 @@ class SupabaseRepository {
         .from('master_production_type_header')
         .select('id')
         .eq('type_name', modelName)
+        .isFilter('deleted_at', null)
         .limit(1)
         .then((value) => value.isNotEmpty ? value.first['id'] : null);
 
