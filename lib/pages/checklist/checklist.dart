@@ -160,7 +160,8 @@ class _ChecklistPageState extends State<ChecklistPage> {
                       ),
                     ),
                     Visibility(
-                      visible: false,
+                      visible: context.read<AuthBloc>().state is AuthenticatedState &&
+                          ChecklistPage.allowedUserRoles.contains((context.read<AuthBloc>().state as AuthenticatedState).user.role.name),
                       child: PageIndicator(
                         currentPageIndex: _currentIndex,
                         maxLength: state.data.length,
@@ -261,6 +262,7 @@ class _PartsPageState extends State<PartsPage> with TickerProviderStateMixin {
   @override
   void initState() {
     super.initState();
+
     _scrollControllerTop = ScrollController();
     _scrollControllerBottom = ScrollController();
     _animationControllerTop = AnimationController(
@@ -273,15 +275,17 @@ class _PartsPageState extends State<PartsPage> with TickerProviderStateMixin {
     );
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (_scrollControllerTop.position.maxScrollExtent > 0) {
-        _animationControllerTop.addListener(_scrollListenerTop);
-      }
+      if (context.read<AuthBloc>().state is UnauthenticatedState) {
+        if (_scrollControllerTop.position.maxScrollExtent > 0) {
+          _animationControllerTop.addListener(_scrollListenerTop);
+        }
 
-      if (_scrollControllerBottom.position.maxScrollExtent > 0) {
-        _animationControllerBottom.addListener(_scrollListenerBottom);
-      }
+        if (_scrollControllerBottom.position.maxScrollExtent > 0) {
+          _animationControllerBottom.addListener(_scrollListenerBottom);
+        }
 
-      _startScrolling();
+        _startScrolling();
+      }
     });
   }
 
@@ -293,6 +297,7 @@ class _PartsPageState extends State<PartsPage> with TickerProviderStateMixin {
     _scrollControllerTop.dispose();
     _animationControllerBottom.dispose();
     _animationControllerTop.dispose();
+
     super.dispose();
   }
 
@@ -365,10 +370,12 @@ class _PartsPageState extends State<PartsPage> with TickerProviderStateMixin {
                               if ((remainingTime!.compareTo(const Duration(minutes: 45)) < 0 && progress <= 0.25) ||
                                   (remainingTime.compareTo(const Duration(minutes: 30)) < 0 && progress <= 0.5) ||
                                   (remainingTime.compareTo(const Duration(minutes: 15)) < 0 && progress <= 0.75)) {
-                                return Container(
-                                  margin: const EdgeInsets.all(5.0),
-                                  height: 50,
-                                  color: Colors.amber,
+                                return Expanded(
+                                  child: Container(
+                                    margin: const EdgeInsets.all(5.0),
+                                    padding: const EdgeInsets.all(5.0),
+                                    color: Colors.amber,
+                                  ),
                                 );
                               }
                               return Container();
