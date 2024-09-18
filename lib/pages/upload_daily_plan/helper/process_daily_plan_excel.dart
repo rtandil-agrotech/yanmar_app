@@ -38,9 +38,28 @@ Map<String, dynamic> processExcel(Excel excel, DateTime date) {
       {
         'model': planRow[0]!.value.toString(),
         'qty': int.tryParse(planRow[1]!.value.toString()),
-        'zone': List.generate(planRow.length - 2, (index) => int.tryParse(planRow[2 + index]!.value.toString())),
+        'zone': List.generate(planRow.length - 2, (index) => int.tryParse(planRow[2 + index]?.value.toString() ?? '0') ?? 0),
       },
     );
+  }
+
+  final timeSlotLength = timeSlot.length;
+  final planSlotLength = planSlot.length;
+
+  // Filter out zones where column is all 0
+  for (int i = timeSlotLength - 1; i >= 0; i--) {
+    int total = 0;
+    for (int j = planSlotLength - 1; j >= 0; j--) {
+      total += (planSlot[j]['zone'][i] as int);
+    }
+
+    if (total == 0) {
+      timeSlot.removeAt(i);
+
+      for (int j = planSlotLength - 1; j >= 0; j--) {
+        planSlot[j]['zone'].removeAt(i);
+      }
+    }
   }
 
   return {
