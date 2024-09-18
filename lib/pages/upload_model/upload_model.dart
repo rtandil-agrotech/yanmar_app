@@ -15,7 +15,7 @@ import 'package:yanmar_app/pages/upload_model/helper/process_model_excel.dart';
 class UploadModelPage extends StatefulWidget {
   const UploadModelPage({super.key});
 
-  static const allowedUserRoles = [superAdminRole, supervisorRole];
+  static const allowedUserRoles = [superAdminRole, bomRole];
   static const route = '/upload-model';
 
   final defaultLimit = 25;
