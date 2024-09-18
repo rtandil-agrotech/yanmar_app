@@ -46,6 +46,8 @@ Map<String, dynamic> processExcel(Excel excel, DateTime date) {
   final timeSlotLength = timeSlot.length;
   final planSlotLength = planSlot.length;
 
+  final List emptyTimeSlot = [];
+
   // Filter out zones where column is all 0
   for (int i = timeSlotLength - 1; i >= 0; i--) {
     int total = 0;
@@ -54,12 +56,17 @@ Map<String, dynamic> processExcel(Excel excel, DateTime date) {
     }
 
     if (total == 0) {
-      timeSlot.removeAt(i);
+      emptyTimeSlot.add(timeSlot[i]);
+      // timeSlot.removeAt(i);
 
-      for (int j = planSlotLength - 1; j >= 0; j--) {
-        planSlot[j]['zone'].removeAt(i);
-      }
+      // for (int j = planSlotLength - 1; j >= 0; j--) {
+      //   planSlot[j]['zone'].removeAt(i);
+      // }
     }
+  }
+
+  if (emptyTimeSlot.isNotEmpty) {
+    throw Exception('These timeslots are empty: ${emptyTimeSlot.map((e) => '${e['start_time']} - ${e['end_time']}').join(', ')}');
   }
 
   return {
