@@ -62,11 +62,14 @@ class _DeliveryPageState extends State<DeliveryPage> {
       create: (context) => _bloc,
       child: Scaffold(
         appBar: AppBar(
-          leading: Center(
-              child: Text(
-            DateFormat('EEEE, d MMMM yyyy').format(DateTime.now()),
-            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 20, color: Colors.amber),
-          )),
+          leading: Padding(
+            padding: const EdgeInsets.only(left: 8.0),
+            child: Center(
+                child: Text(
+              DateFormat('EEEE, d MMMM yyyy').format(DateTime.now()),
+              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 20, color: Colors.amber),
+            )),
+          ),
           leadingWidth: 300,
           title: const Text(
             'DELIVERY CONTROL BOARD',
@@ -89,69 +92,69 @@ class _DeliveryPageState extends State<DeliveryPage> {
         ),
         body: Padding(
           padding: const EdgeInsets.all(10.0),
-          child: BlocBuilder<DeliveryDataFetcherBloc, DeliveryDataFetcherState>(builder: (context, state) {
-            if (state is DeliveryDataFetcherLoading) {
-              return const Center(child: CircularProgressIndicator());
-            } else if (state is DeliveryDataFetcherDone) {
-              if (state.result.isEmpty) {
-                return const Center(
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Padding(
-                        padding: EdgeInsets.only(right: 10.0),
-                        child: Icon(Icons.warning_amber),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              BlocBuilder<auth_bloc.AuthBloc, auth_bloc.AuthState>(
+                builder: (context, state) {
+                  if (state is auth_bloc.AuthenticatedState && DeliveryPage.rolesForMonitor.contains(state.user.role.name)) {
+                    return Padding(
+                      padding: const EdgeInsets.all(10.0),
+                      child: Row(
+                        children: [
+                          ElevatedButton(
+                            onPressed: () async {
+                              final newDate = await showDatePicker(
+                                context: context,
+                                firstDate: DateTime(selectedDate.year, 1, 1),
+                                lastDate: DateTime(selectedDate.year + 5, 1, 1),
+                                currentDate: selectedDate,
+                              );
+                              if (newDate != null) {
+                                setState(() {
+                                  selectedDate = newDate;
+                                  _bloc.add(FetchDeliveryData(currentDate: selectedDate));
+                                });
+                              }
+                            },
+                            child: const Text('Select Date'),
+                          ),
+                          const SizedBox(
+                            width: 20,
+                          ),
+                          Text('Current Selected Date: ${selectedDateFormatter.format(selectedDate)}'),
+                        ],
                       ),
-                      Text(
-                        'No data',
-                        style: TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ],
-                  ),
-                );
-              } else {
-                return Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    BlocBuilder<auth_bloc.AuthBloc, auth_bloc.AuthState>(
-                      builder: (context, state) {
-                        if (state is auth_bloc.AuthenticatedState && DeliveryPage.rolesForMonitor.contains(state.user.role.name)) {
-                          return Padding(
-                            padding: const EdgeInsets.all(10.0),
-                            child: Row(
-                              children: [
-                                ElevatedButton(
-                                  onPressed: () async {
-                                    final newDate = await showDatePicker(
-                                      context: context,
-                                      firstDate: DateTime(selectedDate.year, 1, 1),
-                                      lastDate: DateTime(selectedDate.year + 5, 1, 1),
-                                      currentDate: selectedDate,
-                                    );
-                                    if (newDate != null) {
-                                      setState(() {
-                                        selectedDate = newDate;
-                                        _bloc.add(FetchDeliveryData(currentDate: selectedDate));
-                                      });
-                                    }
-                                  },
-                                  child: const Text('Select Date'),
-                                ),
-                                const SizedBox(
-                                  width: 20,
-                                ),
-                                Text('Current Selected Date: ${selectedDateFormatter.format(selectedDate)}'),
-                              ],
+                    );
+                  }
+                  return Container();
+                },
+              ),
+              BlocBuilder<DeliveryDataFetcherBloc, DeliveryDataFetcherState>(builder: (context, state) {
+                if (state is DeliveryDataFetcherLoading) {
+                  return const Center(child: CircularProgressIndicator());
+                } else if (state is DeliveryDataFetcherDone) {
+                  if (state.result.isEmpty) {
+                    return const Center(
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Padding(
+                            padding: EdgeInsets.only(right: 10.0),
+                            child: Icon(Icons.warning_amber),
+                          ),
+                          Text(
+                            'No data',
+                            style: TextStyle(
+                              fontSize: 20,
+                              fontWeight: FontWeight.bold,
                             ),
-                          );
-                        }
-                        return Container();
-                      },
-                    ),
-                    ConstrainedBox(
+                          ),
+                        ],
+                      ),
+                    );
+                  } else {
+                    return ConstrainedBox(
                       constraints: BoxConstraints.loose(Size(MediaQuery.of(context).size.width, MediaQuery.of(context).size.height - 144)),
                       child: InteractiveViewer(
                         constrained: false,
@@ -161,17 +164,17 @@ class _DeliveryPageState extends State<DeliveryPage> {
                                 BoxConstraints(minHeight: MediaQuery.of(context).size.height - 144, minWidth: MediaQuery.of(context).size.width),
                             child: DeliveryTable(data: state.result)),
                       ),
-                    ),
-                  ],
-                );
-              }
-            } else if (state is DeliveryDataFetcherFailed) {
-              return Center(
-                child: Text('Failed to fetch data. ${state.message}'),
-              );
-            }
-            return Container();
-          }),
+                    );
+                  }
+                } else if (state is DeliveryDataFetcherFailed) {
+                  return Center(
+                    child: Text('Failed to fetch data. ${state.message}'),
+                  );
+                }
+                return Container();
+              }),
+            ],
+          ),
         ),
       ),
     );
@@ -187,6 +190,7 @@ class DeliveryTable extends StatelessWidget {
   final List<DeliveryPlanModel> data;
 
   final DateFormat formatter = DateFormat('HH:mm');
+  final DateFormat monitorFormatter = DateFormat('HH:mm:ss');
 
   static const headerHeight = 80.0;
   static const rowHeight = 50.0;
@@ -316,6 +320,7 @@ class DeliveryTable extends StatelessWidget {
                         color: showColor(data[i], mapOpAssemblyHeaderToDb[opAssemblyHeader[index]]!),
                         alignment: Alignment.center,
                         height: rowHeight,
+                        child: showChild(context, data: data[i], opAssemblyName: mapOpAssemblyHeaderToDb[opAssemblyHeader[index]]!),
                       ),
                     ),
                   ),
@@ -328,6 +333,7 @@ class DeliveryTable extends StatelessWidget {
                         color: showColor(data[i], mapSubAssemblyHeaderToDb[subAssemblyHeader[index]]!),
                         alignment: Alignment.center,
                         height: rowHeight,
+                        child: showChild(context, data: data[i], opAssemblyName: mapSubAssemblyHeaderToDb[subAssemblyHeader[index]]!),
                       ),
                     ),
                   ),
@@ -359,18 +365,67 @@ class DeliveryTable extends StatelessWidget {
               if (data.isHelpPressed.contains(true)) {
                 return Colors.red;
               } else {
-                return Colors.amber;
+                return Colors.yellow;
               }
             }
           } else {
-            return Colors.yellow;
+            return Colors.amber;
           }
         }
       } catch (e) {
-        print('${data.startTime.toLocal()} - ${data.endTime.toLocal()}\n');
-        print('$opAssemblyName\n');
-        print('${data.itemRequests}\n');
         return null;
+      }
+    }
+
+    return null;
+  }
+
+  Widget? showChild(BuildContext context, {required DeliveryPlanModel data, required String opAssemblyName}) {
+    final state = context.read<auth_bloc.AuthBloc>().state;
+
+    if (state is auth_bloc.AuthenticatedState && DeliveryPage.rolesForMonitor.contains(state.user.role.name)) {
+      if (data.itemRequests.isNotEmpty) {
+        final List<Widget> widgets = [];
+
+        try {
+          final itemRequestData = data.itemRequests.firstWhere((element) => element.opAssembly.name.trim() == opAssemblyName.trim());
+          if (itemRequestData.startTime != null) {
+            final duration = itemRequestData.endTime?.difference(itemRequestData.startTime!).inSeconds ?? 0;
+            // 1 hour to fulfil order
+            const fulfilmentTime = 3600;
+
+            TextStyle? labelStyle;
+            TextStyle? textStyle = const TextStyle(color: Colors.amber);
+
+            if (duration > fulfilmentTime || itemRequestData.endTime == null) {
+              labelStyle = const TextStyle(color: Colors.black);
+              textStyle = const TextStyle(color: Colors.black);
+            }
+
+            widgets.add(Text.rich(
+              TextSpan(children: [
+                TextSpan(text: 'ST: ', style: labelStyle),
+                TextSpan(text: monitorFormatter.format(itemRequestData.startTime!.toLocal()), style: textStyle),
+              ]),
+            ));
+
+            if (itemRequestData.endTime != null) {
+              widgets.add(Text.rich(
+                TextSpan(children: [
+                  TextSpan(text: 'SP: ', style: labelStyle),
+                  TextSpan(text: monitorFormatter.format(itemRequestData.endTime!.toLocal()), style: textStyle),
+                ]),
+              ));
+            }
+
+            return Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: widgets,
+            );
+          }
+        } catch (e) {
+          return null;
+        }
       }
     }
 

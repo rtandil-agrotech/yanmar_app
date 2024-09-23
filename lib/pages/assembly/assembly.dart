@@ -56,10 +56,10 @@ class _AssemblyPageState extends State<AssemblyPage> {
 
   @override
   Future<void> dispose() async {
+    super.dispose();
     _bloc.close();
     _monthlyBloc.close();
     await _repo.unsubscribe(_subs);
-    super.dispose();
   }
 
   @override
@@ -687,20 +687,26 @@ class AssemblyTable extends StatelessWidget {
                     child: Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 10.0),
                       child: DataTable(
-                        columnSpacing: 10,
+                        columnSpacing: 0,
+                        horizontalMargin: 0,
                         dataTextStyle: tableStyle,
                         border: TableBorder.all(color: Colors.white),
                         columns: [
-                          const DataColumn(label: Text('Time')),
-                          const DataColumn(label: Text('Plan')),
-                          const DataColumn(label: Text('Qty')),
-                          ...List.generate(
-                              maxQtyInDetails, (index) => DataColumn(label: Flexible(child: Center(child: Text((index + 1).toString()))))),
-                          const DataColumn(label: Text('Total')),
-                          const DataColumn(label: Text('Actual')),
-                          const DataColumn(label: Text('Ratio')),
-                        ],
-                        rows: generateTable(list: state.result, maxLength: maxQtyInDetails),
+                          const Text('Time'),
+                          const Text('Plan'),
+                          const Text('Qty'),
+                          ...List.generate(maxQtyInDetails, (index) => Text((index + 1).toString())),
+                          const Text('Total'),
+                          const Text('Actual'),
+                          const Text('Ratio'),
+                        ]
+                            .map(
+                              (e) => DataColumn(
+                                label: Flexible(child: Center(child: e)),
+                              ),
+                            )
+                            .toList(),
+                        rows: generateTable(context, list: state.result, maxLength: maxQtyInDetails),
                       ),
                     ),
                   ),
@@ -752,8 +758,9 @@ int findMaxQtyInDetails(List<PlanProduksiModel> list) {
   return maxQty;
 }
 
-List<DataRow> generateTable({required List<PlanProduksiModel> list, required int maxLength}) {
+List<DataRow> generateTable(BuildContext context, {required List<PlanProduksiModel> list, required int maxLength}) {
   final DateFormat formatter = DateFormat('HH:mm');
+  final DateFormat monitorFormatter = DateFormat('HH:mm:ss');
 
   final List<DataRow> listDataRow = [];
 
@@ -770,15 +777,23 @@ List<DataRow> generateTable({required List<PlanProduksiModel> list, required int
     final Set<ProductionTypeModel> uniqueActualTypesInRow = {};
 
     // Time
-    final DataCell timeCell = DataCell(Center(child: Text('${formatter.format(startTime.toLocal())} - ${formatter.format(endTime.toLocal())}')));
+    final DataCell timeCell = DataCell(Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 8.0),
+      child: Center(child: Text('${formatter.format(startTime.toLocal())} - ${formatter.format(endTime.toLocal())}')),
+    ));
     // Plan
-    final DataCell planCell = DataCell(Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: row.details.map((e) => Text(e.type.typeName)).toList()));
+    final DataCell planCell = DataCell(Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 8.0),
+      child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: row.details.map((e) => Text(e.type.typeName)).toList()),
+    ));
     // Qty
-    final DataCell qtyCell =
-        DataCell(Center(child: Column(mainAxisSize: MainAxisSize.min, children: row.details.map((e) => Text(e.qty.toString())).toList())));
+    final DataCell qtyCell = DataCell(Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 8.0),
+      child: Center(child: Column(mainAxisSize: MainAxisSize.min, children: row.details.map((e) => Text(e.qty.toString())).toList())),
+    ));
 
     final List<Widget> widgets = [];
 
@@ -794,16 +809,46 @@ List<DataRow> generateTable({required List<PlanProduksiModel> list, required int
               actuals.recordedTime.isAtSameMomentAs(startTime) ||
               actuals.recordedTime.isAtSameMomentAs(endTime)) {
             widgets.add(Container(
-              // margin: const EdgeInsets.all(5.0),
+              padding: const EdgeInsets.symmetric(horizontal: 8.0),
               constraints: const BoxConstraints.expand(),
-              color: Colors.green,
-              child: Center(
-                  child: Text(
-                detail.type.typeName,
-                style: tableStyle,
-                softWrap: true,
-                maxLines: 3,
-              )),
+              color: () {
+                final state = context.read<auth_bloc.AuthBloc>().state;
+
+                if (state is auth_bloc.AuthenticatedState && AssemblyPage.rolesForMonitor.contains(state.user.role.name)) {
+                  return Colors.green.withAlpha(125);
+                }
+
+                return Colors.green;
+              }(),
+              child: () {
+                final state = context.read<auth_bloc.AuthBloc>().state;
+
+                if (state is auth_bloc.AuthenticatedState && AssemblyPage.rolesForMonitor.contains(state.user.role.name)) {
+                  return Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        detail.type.typeName,
+                        style: tableStyle,
+                        softWrap: true,
+                        maxLines: 3,
+                      ),
+                      Text(
+                        monitorFormatter.format(actuals.recordedTime.toLocal()),
+                        style: tableStyle.copyWith(color: Colors.amber),
+                      )
+                    ],
+                  );
+                }
+
+                return Center(
+                    child: Text(
+                  detail.type.typeName,
+                  style: tableStyle,
+                  softWrap: true,
+                  maxLines: 3,
+                ));
+              }(),
             ));
 
             generatedCell++;
@@ -832,8 +877,7 @@ List<DataRow> generateTable({required List<PlanProduksiModel> list, required int
 
               widgets.add(
                 Container(
-                  margin: const EdgeInsets.all(5.0),
-                  constraints: BoxConstraints.tight(const Size.fromWidth(60)),
+                  padding: const EdgeInsets.symmetric(horizontal: 8.0),
                   child: Center(
                       child: Text(
                     detail.type.typeName,
@@ -854,7 +898,7 @@ List<DataRow> generateTable({required List<PlanProduksiModel> list, required int
 
     // Generate Empty Boxes
     for (int i = widgets.length; i < maxLength; i++) {
-      widgets.add(const SizedBox());
+      widgets.add(const SizedBox(width: 60));
     }
 
     /* -------------------------- TOTAL, ACTUAL & RATIO ------------------------- */
@@ -865,7 +909,10 @@ List<DataRow> generateTable({required List<PlanProduksiModel> list, required int
       estimatedTime += detail.qty * detail.type.estimatedProductionTime!.inSeconds;
     }
 
-    widgets.add(Text('${Duration(seconds: estimatedTime).inMinutes} min'));
+    widgets.add(Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 8.0),
+      child: Text('${Duration(seconds: estimatedTime).inMinutes} min'),
+    ));
 
     // Count actuals based on type in current row
     final List<Widget> actualCountWidgets = [];
@@ -893,22 +940,25 @@ List<DataRow> generateTable({required List<PlanProduksiModel> list, required int
       }
     }
 
-    widgets.add(Column(
-      mainAxisAlignment: MainAxisAlignment.center,
-      mainAxisSize: MainAxisSize.min,
-      children: actualCountWidgets,
+    widgets.add(Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 8.0),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: actualCountWidgets,
+      ),
     ));
 
     // Count Ratio
-    if (ratio > 0) {
-      widgets.add(Center(
+    widgets.add(Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 8.0),
+      child: Center(
           child: Text(
-        '$ratio',
+        '$ratio / ${row.details.fold(0, (total, element) => total + element.qty)}',
         style: tableStyle,
-      )));
-    } else {
-      widgets.add(const SizedBox());
-    }
+      )),
+    ));
 
     listDataRow.add(DataRow(cells: [
       timeCell,
