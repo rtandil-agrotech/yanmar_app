@@ -26,6 +26,13 @@ class _LoginPageState extends State<LoginPage> {
         title: const Text('Login'),
         centerTitle: true,
       ),
+      floatingActionButton: FloatingActionButton(
+        child: const Icon(Icons.arrow_back),
+        onPressed: () {
+          context.go('/');
+        },
+      ),
+      floatingActionButtonLocation: FloatingActionButtonLocation.startFloat,
       body: BlocListener<AuthBloc, AuthState>(
         listenWhen: (p, c) {
           return p != c;

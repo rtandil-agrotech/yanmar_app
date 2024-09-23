@@ -7,6 +7,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
+import 'package:yanmar_app/bloc/auth_bloc/auth_bloc.dart';
 import 'package:yanmar_app/bloc/show_production_model_bloc/show_production_model_bloc.dart';
 import 'package:yanmar_app/bloc/upload_production_model_bloc/upload_production_model_bloc.dart';
 import 'package:yanmar_app/models/role_model.dart';
@@ -77,6 +78,21 @@ class _UploadModelPageState extends State<UploadModelPage> {
             ),
           ],
         ),
+        floatingActionButton: () {
+          final state = context.read<AuthBloc>().state;
+
+          if (state is AuthenticatedState) {
+            return FloatingActionButton(
+              child: const Icon(Icons.arrow_back),
+              onPressed: () {
+                context.go('/');
+              },
+            );
+          }
+
+          return null;
+        }(),
+        floatingActionButtonLocation: FloatingActionButtonLocation.startFloat,
         body: BlocListener<UploadProductionModelBloc, UploadProductionModelState>(
           listener: (context, state) async {
             if (state is UploadProductionModelFailed) {

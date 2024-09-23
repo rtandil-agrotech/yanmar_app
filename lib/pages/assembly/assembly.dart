@@ -3,9 +3,11 @@ import 'dart:math';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
 import 'package:percent_indicator/percent_indicator.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:yanmar_app/bloc/auth_bloc/auth_bloc.dart' as auth_bloc;
+import 'package:yanmar_app/bloc/auth_bloc/auth_bloc.dart';
 import 'package:yanmar_app/bloc/monthly_plan_produksi_data_fetcher_bloc/monthly_plan_produksi_data_fetcher_bloc.dart';
 import 'package:yanmar_app/bloc/plan_produksi_data_fetcher/plan_produksi_data_fetcher_bloc.dart';
 import 'package:intl/intl.dart';
@@ -134,6 +136,21 @@ class _AssemblyPageState extends State<AssemblyPage> {
             )
           ],
         ),
+        floatingActionButton: () {
+          final state = context.read<AuthBloc>().state;
+
+          if (state is AuthenticatedState) {
+            return FloatingActionButton(
+              child: const Icon(Icons.arrow_back),
+              onPressed: () {
+                context.go('/');
+              },
+            );
+          }
+
+          return null;
+        }(),
+        floatingActionButtonLocation: FloatingActionButtonLocation.startFloat,
         body: Column(
           children: [
             BlocBuilder<auth_bloc.AuthBloc, auth_bloc.AuthState>(

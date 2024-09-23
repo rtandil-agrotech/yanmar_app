@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:yanmar_app/bloc/auth_bloc/auth_bloc.dart' as auth_bloc;
+import 'package:yanmar_app/bloc/auth_bloc/auth_bloc.dart';
 import 'package:yanmar_app/bloc/delivery_data_fetcher_bloc/delivery_data_fetcher_bloc.dart';
 import 'package:yanmar_app/locator.dart';
 import 'package:yanmar_app/models/delivery_model.dart';
@@ -90,6 +92,21 @@ class _DeliveryPageState extends State<DeliveryPage> {
             ),
           ],
         ),
+        floatingActionButton: () {
+          final state = context.read<AuthBloc>().state;
+
+          if (state is AuthenticatedState) {
+            return FloatingActionButton(
+              child: const Icon(Icons.arrow_back),
+              onPressed: () {
+                context.go('/');
+              },
+            );
+          }
+
+          return null;
+        }(),
+        floatingActionButtonLocation: FloatingActionButtonLocation.startFloat,
         body: Padding(
           padding: const EdgeInsets.all(10.0),
           child: Column(

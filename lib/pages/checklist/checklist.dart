@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:yanmar_app/bloc/auth_bloc/auth_bloc.dart';
 import 'package:yanmar_app/bloc/rack_data_fetcher_bloc/rack_data_fetcher_bloc.dart';
@@ -55,11 +56,14 @@ class _ChecklistPageState extends State<ChecklistPage> {
       create: (context) => _rackBloc,
       child: Scaffold(
         appBar: AppBar(
-          leading: Center(
-              child: Text(
-            DateFormat('EEEE, d MMMM yyyy').format(DateTime.now()),
-            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 20, color: Colors.amber),
-          )),
+          leading: Padding(
+            padding: const EdgeInsets.only(left: 20.0),
+            child: Center(
+                child: Text(
+              DateFormat('EEEE, d MMMM yyyy').format(DateTime.now()),
+              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 20, color: Colors.amber),
+            )),
+          ),
           leadingWidth: 300,
           title: BlocBuilder<RackDataFetcherBloc, RackDataFetcherState>(
             builder: (context, state) {
@@ -100,6 +104,21 @@ class _ChecklistPageState extends State<ChecklistPage> {
             ),
           ],
         ),
+        floatingActionButton: () {
+          final state = context.read<AuthBloc>().state;
+
+          if (state is AuthenticatedState) {
+            return FloatingActionButton(
+              child: const Icon(Icons.arrow_back),
+              onPressed: () {
+                context.go('/');
+              },
+            );
+          }
+
+          return null;
+        }(),
+        floatingActionButtonLocation: FloatingActionButtonLocation.startFloat,
         body: BlocBuilder<RackDataFetcherBloc, RackDataFetcherState>(
           builder: (context, state) {
             if (state is RackDataFetcherLoading) {

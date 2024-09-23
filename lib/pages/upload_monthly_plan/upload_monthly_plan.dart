@@ -80,6 +80,21 @@ class _UploadMonthlyPlanPageState extends State<UploadMonthlyPlanPage> {
             ),
           ],
         ),
+        floatingActionButton: () {
+          final state = context.read<AuthBloc>().state;
+
+          if (state is AuthenticatedState) {
+            return FloatingActionButton(
+              child: const Icon(Icons.arrow_back),
+              onPressed: () {
+                context.go('/');
+              },
+            );
+          }
+
+          return null;
+        }(),
+        floatingActionButtonLocation: FloatingActionButtonLocation.startFloat,
         body: SingleChildScrollView(
           child: ConstrainedBox(
             constraints: BoxConstraints.expand(

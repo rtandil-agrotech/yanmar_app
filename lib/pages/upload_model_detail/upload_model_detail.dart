@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
+import 'package:yanmar_app/bloc/auth_bloc/auth_bloc.dart';
 import 'package:yanmar_app/bloc/delete_production_model_bloc/delete_production_model_bloc.dart';
 import 'package:yanmar_app/bloc/show_production_model_detail_bloc/show_production_model_detail_bloc.dart';
 
@@ -42,6 +43,21 @@ class _UploadModelDetailPageState extends State<UploadModelDetailPage> {
           title: const Text('Upload Model Detail'),
           centerTitle: true,
         ),
+        floatingActionButton: () {
+          final state = context.read<AuthBloc>().state;
+
+          if (state is AuthenticatedState) {
+            return FloatingActionButton(
+              child: const Icon(Icons.arrow_back),
+              onPressed: () {
+                context.go('/');
+              },
+            );
+          }
+
+          return null;
+        }(),
+        floatingActionButtonLocation: FloatingActionButtonLocation.startFloat,
         body: BlocListener<DeleteProductionModelBloc, DeleteProductionModelState>(
           listener: (context, state) {
             if (state is DeleteProductionModelLoading) {
