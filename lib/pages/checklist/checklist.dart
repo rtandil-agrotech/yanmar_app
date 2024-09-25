@@ -22,7 +22,7 @@ class ChecklistPage extends StatefulWidget {
 
   final int initialPage;
 
-  static const allowedUserRoles = [superAdminRole, picRole];
+  static const allowedUserRoles = [superAdminRole, picRole, bomRole];
   static const route = '/checklist';
 
   @override
