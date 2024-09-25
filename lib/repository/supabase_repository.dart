@@ -353,6 +353,13 @@ class SupabaseRepository {
     return {'data': details, 'header': model};
   }
 
+  Future<void> updateEstimatedProductionDuration({required int typeId, required Duration productionDuration}) async {
+    await _client.from('master_production_type_header').update({
+      'estimated_production_duration': productionDuration.toString(),
+      'updated_at': DateTime.now().toUtc().toIso8601String(),
+    }).eq('id', typeId);
+  }
+
   Future<void> deleteMasterProductionType({required int id}) async {
     await _client.from('master_production_type_header').update({'deleted_at': DateTime.now().toUtc().toIso8601String()}).eq('id', id);
   }

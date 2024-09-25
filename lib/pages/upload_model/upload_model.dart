@@ -9,6 +9,7 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:yanmar_app/bloc/auth_bloc/auth_bloc.dart';
 import 'package:yanmar_app/bloc/show_production_model_bloc/show_production_model_bloc.dart';
+import 'package:yanmar_app/bloc/update_estimated_production_duration_bloc/update_estimated_production_duration_bloc.dart';
 import 'package:yanmar_app/bloc/upload_production_model_bloc/upload_production_model_bloc.dart';
 import 'package:yanmar_app/models/role_model.dart';
 import 'package:yanmar_app/pages/upload_model/helper/process_model_excel.dart';
@@ -28,6 +29,7 @@ class UploadModelPage extends StatefulWidget {
 class _UploadModelPageState extends State<UploadModelPage> {
   final ShowProductionModelBloc _bloc = ShowProductionModelBloc();
   final UploadProductionModelBloc _uploadBloc = UploadProductionModelBloc();
+  final UpdateEstimatedProductionDurationBloc _updateDurationBloc = UpdateEstimatedProductionDurationBloc();
 
   final DateFormat dateFormatter = DateFormat('dd/MM/yyyy HH:mm');
 
@@ -48,6 +50,9 @@ class _UploadModelPageState extends State<UploadModelPage> {
         ),
         BlocProvider(
           create: (context) => _uploadBloc,
+        ),
+        BlocProvider(
+          create: (context) => _updateDurationBloc,
         ),
       ],
       child: Scaffold(
@@ -93,45 +98,99 @@ class _UploadModelPageState extends State<UploadModelPage> {
           return null;
         }(),
         floatingActionButtonLocation: FloatingActionButtonLocation.startFloat,
-        body: BlocListener<UploadProductionModelBloc, UploadProductionModelState>(
-          listener: (context, state) async {
-            if (state is UploadProductionModelFailed) {
-              await showDialog(
-                context: context,
-                builder: (_) {
-                  return AlertDialog(
-                    title: const Text('Failed to Delete Plan'),
-                    content: Text(state.message),
-                    actions: [
-                      ElevatedButton(
-                        onPressed: () {
-                          _.pop(false);
-                        },
-                        child: const Text('Dismiss'),
-                      ),
-                    ],
+        body: MultiBlocListener(
+          listeners: [
+            BlocListener<UploadProductionModelBloc, UploadProductionModelState>(
+              listener: (context, state) async {
+                if (state is UploadProductionModelFailed) {
+                  await showDialog(
+                    context: context,
+                    builder: (_) {
+                      return AlertDialog(
+                        title: const Text('Failed to Delete Plan'),
+                        content: Text(state.message),
+                        actions: [
+                          ElevatedButton(
+                            onPressed: () {
+                              _.pop(false);
+                            },
+                            child: const Text('Dismiss'),
+                          ),
+                        ],
+                      );
+                    },
                   );
-                },
-              );
-              _bloc.add(FetchProductionModel(page: 1, limit: widget.defaultLimit));
-            } else if (state is UploadProductionModelLoading) {
-              showDialog(
-                context: context,
-                barrierDismissible: false,
-                builder: (_) => const AlertDialog(
-                  content: Center(
-                    child: CircularProgressIndicator(),
-                  ),
-                ),
-              );
+                  _bloc.add(FetchProductionModel(page: 1, limit: widget.defaultLimit));
+                } else if (state is UploadProductionModelLoading) {
+                  showDialog(
+                    context: context,
+                    barrierDismissible: false,
+                    builder: (_) => const AlertDialog(
+                      content: Center(
+                        child: CircularProgressIndicator(),
+                      ),
+                    ),
+                  );
 
-              setState(() {
-                isDialogVisible = true;
-              });
-            } else if (state is UploadProductionModelDone) {
-              _bloc.add(FetchProductionModel(page: 1, limit: widget.defaultLimit));
-            }
-          },
+                  setState(() {
+                    isDialogVisible = true;
+                  });
+                } else if (state is UploadProductionModelDone) {
+                  if (isDialogVisible) {
+                    Navigator.of(context, rootNavigator: true).pop();
+                  }
+
+                  _bloc.add(FetchProductionModel(page: 1, limit: widget.defaultLimit));
+                }
+              },
+            ),
+            BlocListener<UpdateEstimatedProductionDurationBloc, UpdateEstimatedProductionDurationState>(
+              listener: (context, state) async {
+                if (state is UpdateEstimatedProductionDurationFailed) {
+                  await showDialog(
+                    context: context,
+                    builder: (_) {
+                      return AlertDialog(
+                        title: const Text('Failed to Delete Plan'),
+                        content: Text(state.message),
+                        actions: [
+                          ElevatedButton(
+                            onPressed: () {
+                              _.pop(false);
+                            },
+                            child: const Text('Dismiss'),
+                          ),
+                        ],
+                      );
+                    },
+                  );
+                  _bloc.add(FetchProductionModel(page: 1, limit: widget.defaultLimit));
+                } else if (state is UpdateEstimatedProductionDurationLoading) {
+                  showDialog(
+                    context: context,
+                    barrierDismissible: false,
+                    builder: (_) => const AlertDialog(
+                      content: Center(
+                        child: CircularProgressIndicator(),
+                      ),
+                    ),
+                  );
+
+                  setState(() {
+                    isDialogVisible = true;
+                  });
+                } else if (state is UpdateEstimatedProductionDurationDone) {
+                  if (isDialogVisible) {
+                    Navigator.of(context, rootNavigator: true).pop();
+                  }
+
+                  final int currentPage = _bloc.state is ShowProductionModelDone ? (_bloc.state as ShowProductionModelDone).currentPage : 1;
+
+                  _bloc.add(FetchProductionModel(page: currentPage, limit: widget.defaultLimit));
+                }
+              },
+            ),
+          ],
           child: BlocBuilder<ShowProductionModelBloc, ShowProductionModelState>(
             builder: (context, state) {
               if (state is ShowProductionModelLoading) {
@@ -139,7 +198,7 @@ class _UploadModelPageState extends State<UploadModelPage> {
                   child: CircularProgressIndicator(),
                 );
               } else if (state is ShowProductionModelFailed) {
-                return Center(child: Text('Failed to load data: ${state.message}'));
+                return Center(child: Text('Failed to load data: //${state.message}'));
               } else if (state is ShowProductionModelDone) {
                 if (state.productionModels.isEmpty) {
                   return const Center(
@@ -385,7 +444,73 @@ class _UploadModelPageState extends State<UploadModelPage> {
                                         context.go('${UploadModelPage.route}/${state.productionModels[i].id}');
                                       },
                                       title: Text(state.productionModels[i].typeName),
-                                      trailing: Text(state.productionModels[i].estimatedProductionTime.toString().split('.').first),
+                                      trailing: Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          Text(state.productionModels[i].estimatedProductionTime.toString().split('.').first),
+                                          const SizedBox(width: 5),
+                                          IconButton(
+                                              onPressed: () async {
+                                                final Duration? newDur = await showDialog(
+                                                  context: context,
+                                                  builder: (_) {
+                                                    final GlobalKey<FormFieldState> formKey = GlobalKey();
+
+                                                    return AlertDialog(
+                                                      title: const Text('Edit Estimated Production Time'),
+                                                      content: TextFormField(
+                                                        key: formKey,
+                                                        initialValue: state.productionModels[i].estimatedProductionTime.toString().split('.').first,
+                                                        validator: (value) {
+                                                          if (value == null || value.isEmpty) {
+                                                            return 'Field must not be empty';
+                                                          }
+
+                                                          if (value.split(':').length != 3) {
+                                                            return 'Field must be in HH:MM:SS format';
+                                                          }
+
+                                                          return null;
+                                                        },
+                                                      ),
+                                                      actions: [
+                                                        ElevatedButton(
+                                                          onPressed: () {
+                                                            _.pop(null);
+                                                          },
+                                                          child: const Text('Cancel'),
+                                                        ),
+                                                        ElevatedButton(
+                                                          onPressed: () {
+                                                            formKey.currentState?.save();
+                                                            if (formKey.currentState?.validate() ?? false) {
+                                                              final value = formKey.currentState!.value.toString().trim().split(':');
+
+                                                              final Duration dur = Duration(
+                                                                hours: int.tryParse(value[0]) ?? 0,
+                                                                minutes: int.tryParse(value[1]) ?? 0,
+                                                                seconds: int.tryParse(value[2]) ?? 0,
+                                                              );
+
+                                                              _.pop(dur);
+                                                            }
+                                                          },
+                                                          child: const Text('Confirm'),
+                                                        ),
+                                                      ],
+                                                    );
+                                                  },
+                                                );
+
+                                                if (newDur != null) {
+                                                  //Call event
+                                                  _updateDurationBloc.add(UpdateEstimatedProductionDuration(
+                                                      id: state.productionModels[i].id, productionDuration: newDur));
+                                                }
+                                              },
+                                              icon: const Icon(Icons.edit))
+                                        ],
+                                      ),
                                       subtitle: Text('created: ${dateFormatter.format(state.productionModels[i].createdAt.toLocal())}'),
                                     ),
                                   );
