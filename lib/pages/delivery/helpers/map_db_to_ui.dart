@@ -29,7 +29,7 @@ const List<String> _subAssemblyHeaderDB = [
   'SUB ASSY STAY RADIATOR',
   'SUB ASSY AIR CLEANER',
   'SUB ASSY FO TANK',
-  ''
+  'SUB ASSY FLYWHEEL'
 ];
 
 final mapOpAssemblyHeaderToDb = Map.fromIterables(opAssemblyHeader, _opAssemblyHeaderDB);

@@ -27,5 +27,5 @@ const List<String> subAssemblyHeader = [
   'Bonnet/Stay Rad',
   'Air Cleaner',
   'Fo Tank',
-  ''
+  'Flywheel'
 ];
