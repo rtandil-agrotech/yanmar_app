@@ -62,10 +62,10 @@ class _UploadDailyPlanPageState extends State<UploadDailyPlanPage> {
               padding: const EdgeInsets.symmetric(horizontal: 8.0),
               child: TextButton(
                 onPressed: () async {
-                  final ByteData data = await rootBundle.load('assets/template_excel/Template Upload Daily Plan.xlsx');
+                  final ByteData data = await rootBundle.load('assets/template_excel/Template Upload Daily Plan update 23 okt 2024.xlsx');
                   Uint8List fileData = data.buffer.asUint8List();
 
-                  String fileName = 'Template Upload Daily Plan';
+                  String fileName = 'Template Upload Daily Plan update 23 okt 2024';
                   MimeType mimeType = MimeType.custom;
 
                   await FileSaver.instance.saveFile(
