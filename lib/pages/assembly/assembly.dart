@@ -77,11 +77,14 @@ class _AssemblyPageState extends State<AssemblyPage> {
       ],
       child: Scaffold(
         appBar: AppBar(
-          leading: Center(
-              child: Text(
-            DateFormat('EEEE, d MMMM yyyy').format(DateTime.now()),
-            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.amber),
-          )),
+          leading: Padding(
+            padding: const EdgeInsets.only(left: 20.0),
+            child: Image.asset(
+              'images/yanmar_logo_bawah.png',
+              alignment: Alignment.centerLeft,
+              fit: BoxFit.contain,
+            ),
+          ),
           leadingWidth: 300,
           title: const Text('ASSEMBLY BOARD'),
           centerTitle: true,
@@ -121,15 +124,25 @@ class _AssemblyPageState extends State<AssemblyPage> {
                           return Container();
                         }),
                       )),
-                  StreamBuilder(
-                    stream: Stream.periodic(const Duration(seconds: 1)),
-                    builder: ((context, snapshot) => Align(
-                          alignment: Alignment.center,
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      Center(
                           child: Text(
-                            DateFormat('HH:mm:ss').format(DateTime.now()),
-                            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.amber),
-                          ),
-                        )),
+                        DateFormat('EEEE, d MMMM yyyy').format(DateTime.now()),
+                        style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.amber),
+                      )),
+                      StreamBuilder(
+                        stream: Stream.periodic(const Duration(seconds: 1)),
+                        builder: ((context, snapshot) => Align(
+                              alignment: Alignment.center,
+                              child: Text(
+                                DateFormat('HH:mm:ss').format(DateTime.now()),
+                                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.amber),
+                              ),
+                            )),
+                      ),
+                    ],
                   ),
                 ],
               ),
@@ -197,10 +210,11 @@ class _AssemblyPageState extends State<AssemblyPage> {
               ),
             ),
             const Flexible(
-                child: Padding(
-              padding: EdgeInsets.only(top: 20, bottom: 20.0),
-              child: GraphWidgetAlter(),
-            ))
+              child: Padding(
+                padding: EdgeInsets.only(top: 20, bottom: 20.0),
+                child: GraphWidgetAlter(),
+              ),
+            )
           ],
         ),
       ),

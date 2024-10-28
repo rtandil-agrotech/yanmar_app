@@ -36,6 +36,7 @@ flutter:
 
   assets:
     - assets/template_excel/
+    - assets/images/
 
   fonts:
     - family: Roboto
