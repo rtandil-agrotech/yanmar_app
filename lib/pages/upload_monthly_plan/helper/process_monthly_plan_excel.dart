@@ -9,7 +9,7 @@ List<Map<String, dynamic>> processExcel(Excel excel) {
 
     if (dataRow[0]?.value == null) break;
 
-    if (int.tryParse(dataRow[1]!.value.toString()) == null) continue;
+    if (int.tryParse(dataRow[1]!.value.toString()) == null || int.tryParse(dataRow[1]!.value.toString()) == 0) continue;
 
     monthlyPlan.add({dataRow[0]!.value.toString(): int.tryParse(dataRow[1]!.value.toString()) ?? 0});
   }
