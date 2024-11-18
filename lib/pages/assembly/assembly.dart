@@ -201,7 +201,12 @@ class _AssemblyPageState extends State<AssemblyPage> {
                 return Container();
               },
             ),
-            const Center(child: AssemblyTable()),
+            const Flexible(
+              flex: 7,
+              child: Center(
+                child: AssemblyTable(),
+              ),
+            ),
             ConstrainedBox(
               constraints: BoxConstraints.loose(const Size.fromHeight(100)),
               child: const Padding(
@@ -210,6 +215,7 @@ class _AssemblyPageState extends State<AssemblyPage> {
               ),
             ),
             const Flexible(
+              flex: 3,
               child: Padding(
                 padding: EdgeInsets.only(top: 20, bottom: 20.0),
                 child: GraphWidgetAlter(),
@@ -708,38 +714,32 @@ class AssemblyTable extends StatelessWidget {
                 ),
               );
             } else {
-              return ConstrainedBox(
-                constraints: BoxConstraints.loose(Size(MediaQuery.of(context).size.width, 500)),
-                child: InteractiveViewer(
-                  constrained: false,
-                  scaleEnabled: false,
-                  child: ConstrainedBox(
-                    constraints: BoxConstraints(minHeight: MediaQuery.of(context).size.height, minWidth: MediaQuery.of(context).size.width),
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 10.0),
-                      child: DataTable(
-                        columnSpacing: 0,
-                        horizontalMargin: 0,
-                        dataTextStyle: tableStyle,
-                        border: TableBorder.all(color: Colors.white),
-                        columns: [
-                          const Text('Time'),
-                          const Text('Plan'),
-                          const Text('Qty'),
-                          ...List.generate(maxQtyInDetails, (index) => Text((index + 1).toString())),
-                          const Text('Total'),
-                          const Text('Actual'),
-                          const Text('Ratio'),
-                        ]
-                            .map(
-                              (e) => DataColumn(
-                                label: Flexible(child: Center(child: e)),
-                              ),
-                            )
-                            .toList(),
-                        rows: generateTable(context, list: state.result, maxLength: maxQtyInDetails),
-                      ),
-                    ),
+              return InteractiveViewer(
+                constrained: false,
+                scaleEnabled: false,
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 10.0),
+                  child: DataTable(
+                    columnSpacing: 0,
+                    horizontalMargin: 0,
+                    dataTextStyle: tableStyle,
+                    border: TableBorder.all(color: Colors.white),
+                    columns: [
+                      const Text('Time'),
+                      const Text('Plan'),
+                      const Text('Qty'),
+                      ...List.generate(maxQtyInDetails, (index) => Text((index + 1).toString())),
+                      const Text('Total'),
+                      const Text('Actual'),
+                      const Text('Ratio'),
+                    ]
+                        .map(
+                          (e) => DataColumn(
+                            label: Flexible(child: Center(child: e)),
+                          ),
+                        )
+                        .toList(),
+                    rows: generateTable(context, list: state.result, maxLength: maxQtyInDetails),
                   ),
                 ),
               );
