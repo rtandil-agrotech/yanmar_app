@@ -9,8 +9,10 @@ import 'package:intl/intl.dart';
 import 'package:yanmar_app/bloc/auth_bloc/auth_bloc.dart';
 import 'package:yanmar_app/bloc/rack_data_fetcher_bloc/rack_data_fetcher_bloc.dart';
 import 'package:yanmar_app/locator.dart';
+import 'package:yanmar_app/models/op_assembly_model.dart';
 import 'package:yanmar_app/models/rack_model.dart';
 import 'package:yanmar_app/models/role_model.dart';
+import 'package:yanmar_app/pages/checklist/helper/temp_op_ass_name_converter.dart';
 import 'package:yanmar_app/pages/checklist/widgets/checkbox_widget.dart';
 import 'package:yanmar_app/repository/supabase_repository.dart';
 
@@ -418,7 +420,7 @@ class _PartsPageState extends State<PartsPage> with TickerProviderStateMixin {
                             children: [
                               const SizedBox(height: 10),
                               Text(
-                                widget.data.opAssemblyModel[index].name,
+                                opAssNameConverter(widget.data.opAssemblyModel[index].name),
                                 style: const TextStyle(fontSize: 20, color: Colors.amber),
                               ),
                               Text(
