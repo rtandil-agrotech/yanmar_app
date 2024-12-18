@@ -20,7 +20,6 @@ class UploadMonthlyPlanProduksiBloc extends Bloc<UploadMonthlyPlanProduksiEvent,
         await _repo.uploadMonthlyPlanProduksi(event.excelData, startTime, endTime, event.loggedUserId);
         emit(UploadMonthlyPlanProduksiDone());
       } catch (e) {
-        print('Here ${e.toString()}');
         emit(UploadMonthlyPlanProduksiFailed(e.toString()));
       }
     });

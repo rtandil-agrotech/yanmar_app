@@ -544,7 +544,6 @@ class _UploadModelPageState extends State<UploadModelPage> {
   }
 
   void onUpdateCurrentPageIndex(int index) {
-    print(index);
     _bloc.add(FetchProductionModel(limit: widget.defaultLimit, page: index + 1));
   }
 

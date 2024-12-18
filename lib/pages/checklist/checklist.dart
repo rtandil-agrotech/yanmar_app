@@ -9,7 +9,6 @@ import 'package:intl/intl.dart';
 import 'package:yanmar_app/bloc/auth_bloc/auth_bloc.dart';
 import 'package:yanmar_app/bloc/rack_data_fetcher_bloc/rack_data_fetcher_bloc.dart';
 import 'package:yanmar_app/locator.dart';
-import 'package:yanmar_app/models/op_assembly_model.dart';
 import 'package:yanmar_app/models/rack_model.dart';
 import 'package:yanmar_app/models/role_model.dart';
 import 'package:yanmar_app/pages/checklist/helper/temp_op_ass_name_converter.dart';

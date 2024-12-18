@@ -9,8 +9,6 @@ Map<String, dynamic> processExcel(Excel excel, DateTime date) {
   for (int i = 2; i < excel.tables['TEMPLATE']!.maxColumns; i++) {
     final timeRow = excel.tables['TEMPLATE']!.rows;
 
-    print(timeRow[0][i]?.value);
-
     if (timeRow[0][i]?.value == null) break;
 
     timeSlot.add(
