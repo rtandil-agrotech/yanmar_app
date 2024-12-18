@@ -14,7 +14,7 @@ import 'package:yanmar_app/pages/upload_monthly_plan/upload_monthly_plan.dart';
 final router = GoRouter(
   // initialLocation: ChecklistPage.route,
   routes: [
-    GoRoute(path: HomePage.route, builder: (context, state) => const HomePage()),
+    GoRoute(path: HomePage.route, builder: (context, state) => HomePage()),
     GoRoute(
       path: LoginPage.route,
       builder: (context, state) => const LoginPage(),

@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:yanmar_app/bloc/auth_bloc/auth_bloc.dart';
 import 'package:yanmar_app/helper/circle_avatar_name.dart';
+import 'package:yanmar_app/locator.dart';
 import 'package:yanmar_app/pages/assembly/assembly.dart';
 import 'package:yanmar_app/pages/checklist/checklist.dart';
 import 'package:yanmar_app/pages/delivery/delivery.dart';
@@ -11,9 +12,11 @@ import 'package:yanmar_app/pages/upload_model/upload_model.dart';
 import 'package:yanmar_app/pages/upload_monthly_plan/upload_monthly_plan.dart';
 
 class HomePage extends StatelessWidget {
-  const HomePage({super.key});
+  HomePage({super.key});
 
   static const route = '/';
+
+  final appVersion = locator.get<String>(instanceName: 'appVersion');
 
   @override
   Widget build(BuildContext context) {
@@ -99,10 +102,7 @@ class HomePage extends StatelessWidget {
                       height: 80,
                       fit: BoxFit.contain,
                     ),
-                    // const Text(
-                    //   'Yanmar App',
-                    //   style: TextStyle(fontSize: 30, fontWeight: FontWeight.bold),
-                    // ),
+                    Text('v$appVersion', style: const TextStyle(color: Colors.grey)),
                     const SizedBox(
                       height: 30,
                     ),
