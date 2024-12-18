@@ -75,14 +75,14 @@ class HomePage extends StatelessWidget {
                 child: Stack(
                   children: [
                     Image.asset(
-                      'images/fb_yanboh.png',
+                      'assets/images/fb_yanboh.png',
                       height: 300,
                       fit: BoxFit.contain,
                     ),
                     Padding(
                       padding: const EdgeInsets.only(left: 80.0),
                       child: Image.asset(
-                        'images/fb_marbou.png',
+                        'assets/images/fb_marbou.png',
                         height: 300,
                         fit: BoxFit.contain,
                       ),
@@ -98,7 +98,7 @@ class HomePage extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Image.asset(
-                      'images/yanmar_logo_bawah.png',
+                      'assets/images/yanmar_logo_bawah.png',
                       height: 80,
                       fit: BoxFit.contain,
                     ),
