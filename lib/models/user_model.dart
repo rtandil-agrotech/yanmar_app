@@ -7,10 +7,18 @@ class UserModel extends Equatable {
   final String username;
   final RoleModel role;
 
-  const UserModel({required this.id, required this.uuid, required this.username, required this.role});
+  const UserModel(
+      {required this.id,
+      required this.uuid,
+      required this.username,
+      required this.role});
 
   factory UserModel.fromSupabase(Map<String, dynamic> json) {
-    return UserModel(id: json['id'], uuid: json['uuid'], username: json['username'], role: RoleModel.fromSupabase(json['user_roles']));
+    return UserModel(
+        id: json['id'],
+        uuid: json['uuid'],
+        username: json['username'],
+        role: RoleModel.fromSupabase(json['temp_user_roles']));
   }
 
   @override

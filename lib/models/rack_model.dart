@@ -3,7 +3,6 @@ import 'package:yanmar_app/models/checklist_model.dart';
 import 'package:yanmar_app/models/op_assembly_model.dart';
 
 class RackModel extends Equatable {
-  final int id;
   final String rackName;
   final DateTime? startTime;
   final DateTime? endTime;
@@ -13,7 +12,6 @@ class RackModel extends Equatable {
   final List<ChecklistHeaderStatusModel> checklistHeader;
 
   const RackModel({
-    required this.id,
     required this.rackName,
     required this.startTime,
     required this.endTime,
@@ -24,21 +22,33 @@ class RackModel extends Equatable {
   });
 
   factory RackModel.fromSupabase(
-      Map<String, dynamic> map, int? headerId, List<dynamic>? details, dynamic startTime, dynamic endTime, List<dynamic>? checklistHeader) {
-    final List<OpAssemblyModel> opAssy = (map['master_op_assembly'] as List<dynamic>?)?.map((e) => OpAssemblyModel.fromSupabase(e)).toList() ?? [];
+      List<Map<String, dynamic>> map,
+      int? headerId,
+      List<dynamic>? details,
+      dynamic startTime,
+      dynamic endTime,
+      List<dynamic>? checklistHeader) {
+    final List<OpAssemblyModel> opAssy = (map as List<dynamic>?)
+            ?.map((e) => OpAssemblyModel.fromSupabase(e))
+            .toList() ??
+        [];
 
     return RackModel(
-      id: map['id'],
-      rackName: (map['rack_name'] as int).toString(),
+      rackName: map[0]['rack_name'],
       startTime: startTime != null ? DateTime.parse(startTime) : null,
       endTime: endTime != null ? DateTime.parse(endTime) : null,
       headerId: headerId,
       opAssemblyModel: opAssy,
-      details: (details ?? []).map((e) => ChecklistDetailModel.fromSupabase(e)).toList(),
-      checklistHeader: (checklistHeader ?? []).map((e) => ChecklistHeaderStatusModel.fromSupabase(e)).toList(),
+      details: (details ?? [])
+          .map((e) => ChecklistDetailModel.fromSupabase(e))
+          .toList(),
+      checklistHeader: (checklistHeader ?? [])
+          .map((e) => ChecklistHeaderStatusModel.fromSupabase(e))
+          .toList(),
     );
   }
 
   @override
-  List<Object?> get props => [id, rackName, startTime, endTime, opAssemblyModel, details];
+  List<Object?> get props =>
+      [rackName, startTime, endTime, opAssemblyModel, details];
 }

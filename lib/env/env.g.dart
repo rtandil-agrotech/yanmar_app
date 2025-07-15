@@ -12,5 +12,5 @@ final class _Env {
   static const String supabaseHost = 'http://192.168.228.125:8000/';
 
   static const String anonKey =
-      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.ewogICJyb2xlIjogImFub24iLAogICJpc3MiOiAic3VwYWJhc2UiLAogICJpYXQiOiAxNzIzMjIyODAwLAogICJleHAiOiAxODgwOTg5MjAwCn0.UxPWHtYYQmKwzInIegmm6y4jQOdSNx-4vo3zHnQWKhw';
+      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlIjoiYW5vbiIsImlzcyI6InN1cGFiYXNlIiwiaWF0IjoxNzUyNTEyNDAwLCJleHAiOjE5MTAyNzg4MDB9.YNdaBep3itO7AKU_YUFhYMzrNwOpzWFnwhc-ZI66A30';
 }
