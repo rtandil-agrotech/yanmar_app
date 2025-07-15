@@ -502,46 +502,29 @@ class SupabaseRepository {
           .then((value) => value.isNotEmpty ? value.first['id'] : null);
 
       int? opAssId;
-      int? rackId;
 
       if (partId == null) {
         final rack = (data['rack_placement'] as String).toLowerCase();
 
         opAssId = await _client
             .from('master_op_assembly')
-            .select('id, master_rack(id)')
+            .select('id')
             .eq('rack_placement',
                 '${rack[0].toUpperCase()}${rack.substring(1)}')
-            .eq('master_rack.rack_name', data['rack'])
+            .eq('rack_name', data['rack'])
             .limit(1)
             .then((value) => value.isNotEmpty ? value.first['id'] : null);
 
-        if (opAssId == null) {
-          rackId = await _client
-              .from('master_rack')
-              .select('id')
-              .eq('rack_name', data['rack'])
-              .limit(1)
-              .then((value) => value.isNotEmpty ? value.first['id'] : null);
-
-          rackId ??= await _client
-              .from('master_rack')
-              .insert({'rack_name': data['rack']})
-              .select('id')
-              .limit(1)
-              .then((value) => value.isNotEmpty ? value.first['id'] : null);
-
-          opAssId = await _client
-              .from('master_op_assembly')
-              .insert({
-                'rack_id': rackId,
-                'assembly_name': data['op_assy'],
-                'rack_placement': '${rack[0].toUpperCase()}${rack.substring(1)}'
-              })
-              .select('id')
-              .limit(1)
-              .then((value) => value.isNotEmpty ? value.first['id'] : null);
-        }
+        opAssId ??= await _client
+            .from('master_op_assembly')
+            .insert({
+              'rack_name': data['rack'],
+              'assembly_name': data['op_assy'],
+              'rack_placement': '${rack[0].toUpperCase()}${rack.substring(1)}'
+            })
+            .select('id')
+            .limit(1)
+            .then((value) => value.isNotEmpty ? value.first['id'] : null);
 
         partId = await _client
             .from('master_parts')
