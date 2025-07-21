@@ -315,7 +315,6 @@ class SupabaseRepository {
           UploadPlanProduksiHeaderModel(
         startTime: headersList[i]['start_time'] as DateTime,
         endTime: headersList[i]['end_time'] as DateTime,
-        createdBy: createdBy,
       );
 
       final headerId = await _client
@@ -378,7 +377,6 @@ class SupabaseRepository {
         await _client.from('monthly_production_plan_header').insert({
       'start_time': startTime.toIso8601String(),
       'end_time': endTime.toIso8601String(),
-      'created_by': createdBy,
     }).select('id');
 
     for (int i = 0; i < excelData.length; i++) {
